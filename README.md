@@ -41,6 +41,8 @@ Each tick, every unhappy agent relocates to a uniformly random vacant patch; the
 
 The `kinds of agent` control adds a blue type with its own floor and ceiling. Nothing in the happiness rule changes: `similar-nearby` still counts agents of the asking agent's own color and `total-nearby` still counts all of them. What changes is the baseline, and it is worth keeping in mind when reading the monitor: three equal groups start at about 33% similar rather than 50%, so the same `% similar` number means something different. The tipping point survives the generalization. On a 51 x 51 Moore world at density 95, three equal groups go from 33.7% similar to 53% at a floor of 20, and to 72% at a floor of 30, converging in 11-15 and 20-23 ticks.
 
+Three kinds also make visible something two kinds cannot. Set the groups to 60/20/20 and give every agent the same floor of 30 (the *Identical preferences, unequal groups* preset). At rest the majority lives among 71% its own kind while the two minorities reach only 51% and 46%, and roughly 250 agents never stop moving. No agent's preference differs from any other's: group size alone decides who gets a neighborhood of their own kind. The aggregate `% similar` monitor averages this away, so read it off the lattice, where the majority forms one connected field and the minorities sit in islands.
+
 Agent colors are validated, not chosen by eye. The default trio is red `#D73229`, green `#59B03C`, blue `#2E5FD0`. The colorblind-safe trio is Okabe-Ito vermillion `#D55E00`, bluish green `#009E73` and blue `#0072B2`: of every candidate tested it is the only one clearing all-pairs CVD separation, the normal-vision floor, and 3:1 contrast against **both** the light and the dark lattice background, with a worst case of ΔE 11.0 under deuteranopia. Hue identity is preserved across the two palettes, so red stays warm, green stays green, blue stays blue.
 
 ## Which board is Schelling's
@@ -91,6 +93,7 @@ Every preset was run to its resting state over three seeds; the chip tooltips qu
 | Wants a balanced mix | floor 40, ceiling 60, radius 3 | never settles; `% similar` stalls at 50, 268-331 unhappy |
 | Integrationists | ceiling 45, no floor, radius 3 | never settles; 1735-1817 of 2480 unhappy, `% similar` near 55 |
 | One picky group, one easygoing | red floor 55, green floor 20, Moore | never settles; 544-578 unhappy, `% similar` near 57 |
+| Identical preferences, unequal groups | three kinds 60/20/20, all floor 30, Moore | never settles; majority rests at 71% own-kind, minorities at 51% and 46%; ~250 unhappy |
 | Random type switching | floor 40, `probability-switch` 0.05 | never settles; `% similar` climbs to 83-84 as clusters keep re-forming |
 
 Those three rows are the tipping-point lesson in one screen. At a floor of 20 the preference is too weak to move almost anyone and the world stays mixed. At 30, a population in which every individual is content to be outnumbered more than two to one nonetheless sorts itself to three-quarters similar. At 50 it reaches 87%. The only thing that differs across the three is one number, and no value of it is one most people would call bigotry.
@@ -107,6 +110,7 @@ Those three rows are the tipping-point lesson in one screen. At a floor of 20 th
 | Isolated agents under Moore (`total-nearby = 0`) | happy, matching `0 >= 0 and 0 <= 0` |
 | Density 99 on a 16 x 16 board | no vacancies, halts at t = 0 with the gridlock message |
 | Same seed, two runs, non-default size | bit-identical |
+| `Step` advances the tick and repaints the lattice | canvas pixels change, not only the plots |
 
 The port uses a seeded PRNG (mulberry32), so a given seed reproduces a run exactly. NetLogo's own PRNG differs, so seeds do not transfer between the two.
 

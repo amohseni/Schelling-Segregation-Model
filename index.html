@@ -237,7 +237,6 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
   </div>
   <div class="prov">
     ComplexSegregation.nlogo<br>
-    Wilensky 1997 &middot; Zollman 2018<br>
     <span id="worldReadout">51 &times; 51 torus</span>
   </div>
 </header>
@@ -282,6 +281,7 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
           <button data-preset="band" title="Floor 40 and ceiling 60: an agent is unhappy alone and unhappy surrounded. No arrangement satisfies everyone, so percent similar stalls near 50 and the run never ends.">Wants a balanced mix</button>
           <button data-preset="integrationist" title="Ceiling 45 and no floor: every agent wants to be in the local minority. They cannot all be, so about seven agents in ten stay unhappy forever.">Integrationists</button>
           <button data-preset="mismatched" title="Red wants 55% of its neighbors alike, green only 20%. The picky group is never satisfied: roughly 550 agents keep moving and the world stays near 57% similar.">One picky group, one easygoing</button>
+          <button data-preset="unequal" title="Three kinds at 60/20/20, every one of them holding the same floor of 30. The majority settles among 71% its own kind; the two minorities reach only 51% and 46%. No preference differs between them: group size alone decides who gets a neighborhood of their own kind, and about 250 agents never stop moving.">Identical preferences, unequal groups</button>
           <button data-preset="churn" title="Each agent flips color with probability 0.05 per tick, so the composition never stabilizes even as clusters keep forming.">Random type switching</button>
         </div>
         <label class="check"><input type="checkbox" id="cbX" checked> Mark unhappy agents with &times;</label>
@@ -897,7 +897,7 @@ speedSlider.addEventListener("input", applySpeed);
 applySpeed();
 
 el("btnSetup").addEventListener("click", () => { setup(); refresh(); });
-el("btnStep").addEventListener("click", () => { running = false; go(); refresh(); });
+el("btnStep").addEventListener("click", () => { running = false; go(); paint(); refresh(); });
 el("btnGo").addEventListener("click", () => {
   if (halted === "converged" || halted === "gridlock") return;
   running = !running;
@@ -922,6 +922,7 @@ const PRESETS = {
   band:           { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:60,  greenMin:40, greenMax:60,  neighborhood:"radius", radius:3, pSwitch:0, types:2 },
   integrationist: { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:0,  redMax:45,  greenMin:0,  greenMax:45,  neighborhood:"radius", radius:3, pSwitch:0, types:2 },
   mismatched:     { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:55, redMax:100, greenMin:20, greenMax:100, neighborhood:"moore",  radius:1, pSwitch:0, types:2 },
+  unequal:        { size:NETLOGO_SIZE,   density:95, percentRed:60, redMin:30, redMax:100, greenMin:30, greenMax:100, blueMin:30, blueMax:100, neighborhood:"moore",  radius:1, pSwitch:0, types:3 },
   churn:          { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:100, greenMin:40, greenMax:100, neighborhood:"radius", radius:2, pSwitch:0.05, types:2 }
 };
 document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
