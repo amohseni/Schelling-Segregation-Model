@@ -236,7 +236,7 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
   <div class="prov">
     ComplexSegregation.nlogo<br>
     Wilensky 1997 &middot; Zollman 2018<br>
-    51 &times; 51 torus
+    <span id="worldReadout">51 &times; 51 torus</span>
   </div>
 </header>
 
@@ -269,8 +269,31 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
     </section>
 
     <section class="panel">
+      <div class="phead"><span class="plabel">Presets</span></div>
+      <div class="pbody">
+        <div class="chips">
+          <button data-preset="shipped">As shipped</button>
+          <button data-preset="classic">Classic Schelling</button>
+          <button data-preset="ceiling">Tolerance ceiling</button>
+          <button data-preset="integrationist">Integrationists</button>
+          <button data-preset="churn">Type churn</button>
+        </div>
+        <label class="check"><input type="checkbox" id="cbX" checked> Mark unhappy agents with &times;</label>
+        <label class="check"><input type="checkbox" id="cbCVD"> Colorblind-safe colors</label>
+      </div>
+    </section>
+
+    <section class="panel">
       <div class="phead"><span class="plabel">Parameters</span></div>
       <div class="pbody">
+
+        <div class="group">
+          <div class="gname">World <span class="tag">setup only</span></div>
+          <div class="field">
+            <div class="frow"><span class="fname">lattice-size</span><span class="fval" id="vSize">51 &times; 51</span></div>
+            <input type="range" id="sSize" min="8" max="151" step="1" value="51">
+          </div>
+        </div>
 
         <div class="group">
           <div class="gname">Population <span class="tag">setup only</span></div>
@@ -331,20 +354,6 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
       </div>
     </section>
 
-    <section class="panel">
-      <div class="phead"><span class="plabel">Presets</span></div>
-      <div class="pbody">
-        <div class="chips">
-          <button data-preset="shipped">As shipped</button>
-          <button data-preset="classic">Classic Schelling</button>
-          <button data-preset="ceiling">Tolerance ceiling</button>
-          <button data-preset="integrationist">Integrationists</button>
-          <button data-preset="churn">Type churn</button>
-        </div>
-        <label class="check"><input type="checkbox" id="cbX" checked> Mark unhappy agents with &times;</label>
-        <label class="check"><input type="checkbox" id="cbCVD"> Colorblind-safe colors</label>
-      </div>
-    </section>
   </div>
 
   <!-- ================= LATTICE ================= -->
@@ -365,12 +374,13 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
         </div>
       </div>
       <details class="notes">
-        <summary>What this model does, and three things worth knowing about it</summary>
+        <summary>What this model does, and four things worth knowing about it</summary>
         <div class="notebody">
           <p>Each agent counts its neighbors and is <strong>happy</strong> when the share that matches its own color falls inside <code>[minimum-wanted, maximum-wanted]</code>. Unhappy agents move; happy agents stay. When everyone is happy the run halts.</p>
           <p><strong>1. The ceiling is the interesting part.</strong> Wilensky's original model has only a floor, so agents are never too segregated. Here <code>maximum-wanted</code> below 100 makes an agent unhappy for being <em>too</em> surrounded by its own kind, which can prevent the run from ever settling.</p>
           <p><strong>2. Relocation is global, not local.</strong> An unhappy agent jumps to a uniformly random vacant patch anywhere on the torus, not to a nearby one. That is a real difference from classic Schelling: there is no gradient of escape, so clusters form purely from who stays put.</p>
-          <p><strong>3. Under Radius, an agent counts itself.</strong> <code>turtles in-radius r</code> includes the asking agent, so every agent contributes one guaranteed same-color neighbor. With radius 2 that is 1 of about 13, which lifts the reported <em>% similar</em> by <code>50/n</code> points: at t = 0 the monitor reads about 53.8% where the true share among <em>other</em> agents is 49.9%. The minimum threshold is correspondingly easier to clear than it looks. Moore neighborhoods exclude the agent itself, so the two definitions are not on the same scale.</p>
+          <p><strong>3. Lattice size changes the model, not just the picture.</strong> The radius-2 disc is 13 patches whatever the world size, so on a 51 &times; 51 torus a neighborhood is 0.5% of the world and on a 16 &times; 16 torus it is 5% of it. Shrinking the lattice makes each agent's neighborhood a larger share of everything, and makes the random relocation target a much smaller pool, so small worlds are noisier and reach their resting state in fewer ticks.</p>
+          <p><strong>4. Under Radius, an agent counts itself.</strong> <code>turtles in-radius r</code> includes the asking agent, so every agent contributes one guaranteed same-color neighbor. With radius 2 that is 1 of about 13, which lifts the reported <em>% similar</em> by <code>50/n</code> points: at t = 0 the monitor reads about 53.8% where the true share among <em>other</em> agents is 49.9%. The minimum threshold is correspondingly easier to clear than it looks. Moore neighborhoods exclude the agent itself, so the two definitions are not on the same scale.</p>
         </div>
       </details>
     </section>
@@ -424,24 +434,42 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
    so the world is represented as flat arrays over cells.
    ============================================================ */
 
-const W = 51, H = 51, N = W * H;      // NetLogo world: -25..25 in both axes, wrapping
 const EMPTY = 0, RED = 1, GREEN = 2;
 
-const occ   = new Uint8Array(N);      // color of the agent on each patch, or EMPTY
-const happy = new Uint8Array(N);
-const simN  = new Int32Array(N);      // similar-nearby
-const totN  = new Int32Array(N);      // total-nearby
+// Schelling ran his board at a scale where a neighborhood is a real fraction of
+// the world; NetLogo ships a much larger one. Both are offered as presets, and
+// the two constants below are the sizes those presets use.
+const SCHELLING_SIZE = 16;
+const NETLOGO_SIZE = 51;
 
-let empties = [];                     // indices of vacant patches
-const emptyAt = new Int32Array(N);    // cell -> its position in `empties`, or -1
-
+// A small board cannot carry NetLogo's density of 99: 1% of 256 cells rounds to
+// no vacancies at all and the model deadlocks before the first tick, so the
+// default density is set for the default board, not for NetLogo's.
 const P = {                           // the sliders and choosers
-  density: 99, percentRed: 50,
+  size: SCHELLING_SIZE,
+  density: 70, percentRed: 50,
   redMin: 31, redMax: 100,
   greenMin: 31, greenMax: 100,
   neighborhood: "radius", radius: 2,
   pSwitch: 0
 };
+
+// Square torus of side W. NetLogo ships 51 x 51 (patches -25..25 in both axes,
+// wrapping); the lattice-size slider changes it, taking effect at the next setup.
+let W = P.size, H = P.size, N = W * H;
+
+let occ, happy, simN, totN, emptyAt;
+let empties = [];                     // indices of vacant patches
+function allocWorld(){
+  N = W * H;
+  occ   = new Uint8Array(N);          // color of the agent on each patch, or EMPTY
+  happy = new Uint8Array(N);
+  simN  = new Int32Array(N);          // similar-nearby
+  totN  = new Int32Array(N);          // total-nearby
+  emptyAt = new Int32Array(N);        // cell -> its position in `empties`, or -1
+  empties = [];
+}
+allocWorld();
 
 let ticks = 0, running = false, halted = null;
 let pctSimilar = NaN, pctUnhappy = NaN, numUnhappy = 0, numAgents = 0;
@@ -483,6 +511,7 @@ function setup(){
   running = false; halted = null; ticks = 0;
   histSim.length = 0; histUn.length = 0; histPctUn.length = 0;
   seedRng(+seedInput.value | 0);
+  if (W !== P.size){ W = H = P.size; allocWorld(); }   // lattice-size is setup-only, like density
   occ.fill(EMPTY); happy.fill(0); simN.fill(0); totN.fill(0);
   empties = []; emptyAt.fill(-1);
   for (let i = 0; i < N; i++){
@@ -495,7 +524,7 @@ function setup(){
   buildOffsets();
   updateVariables();
   record();
-  paint();
+  resizeLattice();      // recompute cell size: the world may have changed dimensions
 }
 
 /* ---- one tick ---- */
@@ -746,6 +775,7 @@ const el = id => document.getElementById(id);
 
 function bindSlider(sliderId, valueId, key, fmt, onChange){
   const s = el(sliderId), v = el(valueId);
+  s.value = P[key];                   // P holds the defaults; the markup just sets the range
   const apply = () => {
     P[key] = parseFloat(s.value);
     v.textContent = fmt(P[key]);
@@ -757,6 +787,7 @@ function bindSlider(sliderId, valueId, key, fmt, onChange){
 }
 
 const int = x => String(x);
+bindSlider("sSize", "vSize", "size", v => v + " × " + v);
 bindSlider("sDensity", "vDensity", "density", int);
 bindSlider("sRed", "vRed", "percentRed", int);
 bindSlider("sRmin", "vRmin", "redMin", int, liveRecompute);
@@ -816,15 +847,16 @@ el("cbX").addEventListener("change", paint);
 el("cbCVD").addEventListener("change", () => { readColors(); paint(); });
 
 const PRESETS = {
-  shipped:        { density:99, percentRed:50, redMin:31, redMax:100, greenMin:31, greenMax:100, neighborhood:"radius", radius:2,  pSwitch:0 },
-  classic:        { density:95, percentRed:50, redMin:30, redMax:100, greenMin:30, greenMax:100, neighborhood:"moore",  radius:2,  pSwitch:0 },
-  ceiling:        { density:95, percentRed:50, redMin:40, redMax:60,  greenMin:40, greenMax:60,  neighborhood:"radius", radius:3,  pSwitch:0 },
-  integrationist: { density:95, percentRed:50, redMin:0,  redMax:45,  greenMin:0,  greenMax:45,  neighborhood:"radius", radius:3,  pSwitch:0 },
-  churn:          { density:95, percentRed:50, redMin:40, redMax:100, greenMin:40, greenMax:100, neighborhood:"radius", radius:2,  pSwitch:0.05 }
+  shipped:        { size:NETLOGO_SIZE,   density:99, percentRed:50, redMin:31, redMax:100, greenMin:31, greenMax:100, neighborhood:"radius", radius:2,  pSwitch:0 },
+  classic:        { size:SCHELLING_SIZE, density:70, percentRed:50, redMin:30, redMax:100, greenMin:30, greenMax:100, neighborhood:"moore",  radius:2,  pSwitch:0 },
+  ceiling:        { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:60,  greenMin:40, greenMax:60,  neighborhood:"radius", radius:3,  pSwitch:0 },
+  integrationist: { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:0,  redMax:45,  greenMin:0,  greenMax:45,  neighborhood:"radius", radius:3,  pSwitch:0 },
+  churn:          { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:100, greenMin:40, greenMax:100, neighborhood:"radius", radius:2,  pSwitch:0.05 }
 };
 document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
   const p = PRESETS[b.dataset.preset];
   const set = (id, val) => { const s = el(id); s.value = val; s.dispatchEvent(new Event("input")); };
+  set("sSize", p.size);
   set("sDensity", p.density); set("sRed", p.percentRed);
   set("sRmin", p.redMin); set("sRmax", p.redMax);
   set("sGmin", p.greenMin); set("sGmax", p.greenMax);
@@ -872,6 +904,7 @@ function refresh(){
   el("mNumUnhappy").textContent = numAgents ? String(numUnhappy) : "—";
   el("mAgents").textContent = numAgents ? String(numAgents) : "—";
   el("tickReadout").textContent = "t = " + ticks;
+  el("worldReadout").textContent = W + " \u00D7 " + H + " torus";
   el("occReadout").textContent = numAgents
     ? numAgents + " agents · " + empties.length + " vacant · " +
       (P.neighborhood === "moore" ? "Moore (8)" : "radius " + P.radius + " (" + offX.length + " patches, self included)")
