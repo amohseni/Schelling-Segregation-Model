@@ -68,17 +68,32 @@ These are in the NetLogo source as written, not artifacts of the port. The brows
 - **`Radius` up to 100 on a 51-wide torus.** Anything above 25 is the whole world; the slider's top half is inert.
 - **Order dependence when `Probability-switch > 0`.** Color flips happen inside the same `ask` that counts neighbors, so an agent sees earlier-asked agents already flipped and later-asked agents not yet flipped. The port reproduces this rather than fixing it.
 
-## Fidelity of the browser port
-
 `index.html` reimplements the NetLogo procedures directly: sequential `ask` in randomized order, torus-wrapped shortest distance, `in-radius` including self, a fresh vacancy draw per mover, and the setup-time call to `update-variables`. Verified in headless Chromium:
+
+## Presets
+
+Every preset was run to its resting state over three seeds; the chip tooltips quote what was measured, not what the parameters suggest. The middle three are the same world at three thresholds, and are meant to be clicked in order.
+
+| Preset | Setting | What happens |
+|---|---|---|
+| Schelling's board | 16 x 16, density 80, Moore, floor 30 | converges t = 7-12, `% similar` 47.5 -> 67-72 |
+| NetLogo defaults | 51 x 51, density 99, radius 2, floor 31 | converges t = 18-25, `% similar` 53.9 -> 69.5-70.8 |
+| Wants 20% alike | floor 20, Moore | 104 of 2480 unhappy at t = 0; converges t = 6-8, 50.3 -> 56. Below the tipping point |
+| Wants 30% alike | floor 30, Moore | 399 unhappy; converges t = 15-21, 50.3 -> 74-76. The headline result |
+| Wants 50% alike | floor 50, Moore | 988 unhappy; converges t = 22-27, 50.3 -> 87 |
+| Wants a balanced mix | floor 40, ceiling 60, radius 3 | never settles; `% similar` stalls at 50, 268-331 unhappy |
+| Integrationists | ceiling 45, no floor, radius 3 | never settles; 1735-1817 of 2480 unhappy, `% similar` near 55 |
+| One picky group, one easygoing | red floor 55, green floor 20, Moore | never settles; 544-578 unhappy, `% similar` near 57 |
+| Random type switching | floor 40, `probability-switch` 0.05 | never settles; `% similar` climbs to 83-84 as clusters keep re-forming |
+
+Those three rows are the tipping-point lesson in one screen. At a floor of 20 the preference is too weak to move almost anyone and the world stays mixed. At 30, a population in which every individual is content to be outnumbered more than two to one nonetheless sorts itself to three-quarters similar. At 50 it reaches 87%. The only thing that differs across the three is one number, and no value of it is one most people would call bigotry.
+
+## Fidelity of the browser port
 
 | Check | Result |
 |---|---|
 | Agents + vacancies = cells, at sizes 8/13/16/51/101/151 | exact at every size |
-| Default board, Schelling 16 x 16 (Moore, min 30, density 80) | converges t = 7-12, `% similar` 47.5 -> 66.8-71.5 |
-| `As shipped`, NetLogo 51 x 51 (radius 2, min 31, density 99) | converges t = 18-25, `% similar` 53.9 -> 69.5-70.8 |
-| Tolerance ceiling (min 40, max 60, radius 3) | no convergence in 2000 ticks, 282-398 unhappy |
-| Integrationists (max 45) | no convergence, ~1780 unhappy, `% similar` pinned near 55 |
+| Every preset, three seeds | matches the table above |
 | `Radius = 0` (self only) | 1 neighbor, `% similar` 100, all happy |
 | Isolated agents under Moore (`total-nearby = 0`) | happy, matching `0 >= 0 and 0 <= 0` |
 | Density 99 on a 16 x 16 board | no vacancies, halts at t = 0 with the gridlock message |

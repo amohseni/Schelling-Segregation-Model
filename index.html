@@ -272,11 +272,15 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
       <div class="phead"><span class="plabel">Presets</span></div>
       <div class="pbody">
         <div class="chips">
-          <button data-preset="shipped">As shipped</button>
-          <button data-preset="classic">Classic Schelling</button>
-          <button data-preset="ceiling">Tolerance ceiling</button>
-          <button data-preset="integrationist">Integrationists</button>
-          <button data-preset="churn">Type churn</button>
+          <button data-preset="schelling" title="The 16 x 16 board Schelling describes building and running by hand, about a fifth of it left vacant. Moore neighborhoods; agents want 30% of their neighbors alike.">Schelling&rsquo;s board</button>
+          <button data-preset="netlogo" title="The values ComplexSegregation.nlogo ships with: a 51 x 51 world at 99% occupancy, radius-2 neighborhoods, a floor of 31 and no ceiling.">NetLogo defaults</button>
+          <button data-preset="tolerant" title="Almost nobody is unhappy to begin with (104 agents of 2480), and the world settles near 56% similar. Below the tipping point: the preference is too weak to sort anyone.">Wants 20% alike: stays mixed</button>
+          <button data-preset="tipping" title="The headline result. Every agent is content to be outnumbered more than two to one, and the world still sorts itself to about 75% similar in fifteen to twenty ticks.">Wants 30% alike: sorts anyway</button>
+          <button data-preset="strong" title="Two agents in five are unhappy at the start. The world separates to about 87% similar, still short of the total separation the preference would allow.">Wants 50% alike: sharp separation</button>
+          <button data-preset="band" title="Floor 40 and ceiling 60: an agent is unhappy alone and unhappy surrounded. No arrangement satisfies everyone, so percent similar stalls near 50 and the run never ends.">Wants a balanced mix</button>
+          <button data-preset="integrationist" title="Ceiling 45 and no floor: every agent wants to be in the local minority. They cannot all be, so about seven agents in ten stay unhappy forever.">Integrationists</button>
+          <button data-preset="mismatched" title="Red wants 55% of its neighbors alike, green only 20%. The picky group is never satisfied: roughly 550 agents keep moving and the world stays near 57% similar.">One picky group, one easygoing</button>
+          <button data-preset="churn" title="Each agent flips color with probability 0.05 per tick, so the composition never stabilizes even as clusters keep forming.">Random type switching</button>
         </div>
         <label class="check"><input type="checkbox" id="cbX" checked> Mark unhappy agents with &times;</label>
         <label class="check"><input type="checkbox" id="cbCVD"> Colorblind-safe colors</label>
@@ -847,12 +851,18 @@ el("btnSeed").addEventListener("click", () => {
 el("cbX").addEventListener("change", paint);
 el("cbCVD").addEventListener("change", () => { readColors(); paint(); });
 
+// Every preset below was run to its resting state over three seeds; the chip
+// tooltips quote what was measured, not what the parameters suggest.
 const PRESETS = {
-  shipped:        { size:NETLOGO_SIZE,   density:NETLOGO_DENSITY,   percentRed:50, redMin:31, redMax:100, greenMin:31, greenMax:100, neighborhood:"radius", radius:2,  pSwitch:0 },
-  classic:        { size:SCHELLING_SIZE, density:SCHELLING_DENSITY, percentRed:50, redMin:30, redMax:100, greenMin:30, greenMax:100, neighborhood:"moore",  radius:2,  pSwitch:0 },
-  ceiling:        { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:60,  greenMin:40, greenMax:60,  neighborhood:"radius", radius:3,  pSwitch:0 },
-  integrationist: { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:0,  redMax:45,  greenMin:0,  greenMax:45,  neighborhood:"radius", radius:3,  pSwitch:0 },
-  churn:          { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:100, greenMin:40, greenMax:100, neighborhood:"radius", radius:2,  pSwitch:0.05 }
+  schelling:      { size:SCHELLING_SIZE, density:SCHELLING_DENSITY, percentRed:50, redMin:30, redMax:100, greenMin:30, greenMax:100, neighborhood:"moore",  radius:2, pSwitch:0 },
+  netlogo:        { size:NETLOGO_SIZE,   density:NETLOGO_DENSITY,   percentRed:50, redMin:31, redMax:100, greenMin:31, greenMax:100, neighborhood:"radius", radius:2, pSwitch:0 },
+  tolerant:       { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:20, redMax:100, greenMin:20, greenMax:100, neighborhood:"moore",  radius:2, pSwitch:0 },
+  tipping:        { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:30, redMax:100, greenMin:30, greenMax:100, neighborhood:"moore",  radius:2, pSwitch:0 },
+  strong:         { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:50, redMax:100, greenMin:50, greenMax:100, neighborhood:"moore",  radius:2, pSwitch:0 },
+  band:           { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:60,  greenMin:40, greenMax:60,  neighborhood:"radius", radius:3, pSwitch:0 },
+  integrationist: { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:0,  redMax:45,  greenMin:0,  greenMax:45,  neighborhood:"radius", radius:3, pSwitch:0 },
+  mismatched:     { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:55, redMax:100, greenMin:20, greenMax:100, neighborhood:"moore",  radius:2, pSwitch:0 },
+  churn:          { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:100, greenMin:40, greenMax:100, neighborhood:"radius", radius:2, pSwitch:0.05 }
 };
 document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
   const p = PRESETS[b.dataset.preset];
