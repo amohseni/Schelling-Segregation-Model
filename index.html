@@ -374,13 +374,14 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
         </div>
       </div>
       <details class="notes">
-        <summary>What this model does, and four things worth knowing about it</summary>
+        <summary>What this model does, and five things worth knowing about it</summary>
         <div class="notebody">
           <p>Each agent counts its neighbors and is <strong>happy</strong> when the share that matches its own color falls inside <code>[minimum-wanted, maximum-wanted]</code>. Unhappy agents move; happy agents stay. When everyone is happy the run halts.</p>
           <p><strong>1. The ceiling is the interesting part.</strong> Wilensky's original model has only a floor, so agents are never too segregated. Here <code>maximum-wanted</code> below 100 makes an agent unhappy for being <em>too</em> surrounded by its own kind, which can prevent the run from ever settling.</p>
           <p><strong>2. Relocation is global, not local.</strong> An unhappy agent jumps to a uniformly random vacant patch anywhere on the torus, not to a nearby one. That is a real difference from classic Schelling: there is no gradient of escape, so clusters form purely from who stays put.</p>
-          <p><strong>3. Lattice size changes the model, not just the picture.</strong> The radius-2 disc is 13 patches whatever the world size, so on a 51 &times; 51 torus a neighborhood is 0.5% of the world and on a 16 &times; 16 torus it is 5% of it. Shrinking the lattice makes each agent's neighborhood a larger share of everything, and makes the random relocation target a much smaller pool, so small worlds are noisier and reach their resting state in fewer ticks.</p>
-          <p><strong>4. Under Radius, an agent counts itself.</strong> <code>turtles in-radius r</code> includes the asking agent, so every agent contributes one guaranteed same-color neighbor. With radius 2 that is 1 of about 13, which lifts the reported <em>% similar</em> by <code>50/n</code> points: at t = 0 the monitor reads about 53.8% where the true share among <em>other</em> agents is 49.9%. The minimum threshold is correspondingly easier to clear than it looks. Moore neighborhoods exclude the agent itself, so the two definitions are not on the same scale.</p>
+          <p><strong>3. The default board is Schelling&rsquo;s, and three different boards get called that.</strong> The default here is 16 &times; 16 with about a fifth of the cells vacant, which is the board Schelling describes building and running by hand with coins, in his own retrospective account. The figures printed in his 1971 article use a 13 &times; 16 board, which a square lattice cannot represent; <em>Micromotives and Macrobehavior</em> (1978) uses 8 &times; 8, which the slider reaches. NetLogo&rsquo;s own 51 &times; 51 is the <em>As shipped</em> preset. The two article attributions come from Hegselmann&rsquo;s history of the model rather than from a reading of the originals.</p>
+          <p><strong>4. Lattice size changes the model, not just the picture.</strong> The radius-2 disc is 13 patches whatever the world size, so on a 51 &times; 51 torus a neighborhood is 0.5% of the world and on a 16 &times; 16 torus it is 5% of it. Shrinking the lattice makes each agent's neighborhood a larger share of everything, and makes the random relocation target a much smaller pool, so small worlds are noisier and reach their resting state in fewer ticks.</p>
+          <p><strong>5. Under Radius, an agent counts itself.</strong> <code>turtles in-radius r</code> includes the asking agent, so every agent contributes one guaranteed same-color neighbor. With radius 2 that is 1 of about 13, which lifts the reported <em>% similar</em> by <code>50/n</code> points: at t = 0 the monitor reads about 53.8% where the true share among <em>other</em> agents is 49.9%. The minimum threshold is correspondingly easier to clear than it looks. Moore neighborhoods exclude the agent itself, so the two definitions are not on the same scale.</p>
         </div>
       </details>
     </section>
@@ -436,18 +437,18 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
 
 const EMPTY = 0, RED = 1, GREEN = 2;
 
-// Schelling ran his board at a scale where a neighborhood is a real fraction of
-// the world; NetLogo ships a much larger one. Both are offered as presets, and
-// the two constants below are the sizes those presets use.
-const SCHELLING_SIZE = 16;
-const NETLOGO_SIZE = 51;
+// The board Schelling describes first building and running by hand: 16 x 16,
+// populated at random with about a fifth of the spaces left blank. NetLogo
+// ships a much larger world. Both are offered as presets.
+const SCHELLING_SIZE = 16, SCHELLING_DENSITY = 80;
+const NETLOGO_SIZE = 51, NETLOGO_DENSITY = 99;
 
-// A small board cannot carry NetLogo's density of 99: 1% of 256 cells rounds to
-// no vacancies at all and the model deadlocks before the first tick, so the
-// default density is set for the default board, not for NetLogo's.
+// Density and board size are coupled: 1% of 256 cells rounds to no vacancies at
+// all, and the model deadlocks before the first tick, so NetLogo's density of 99
+// cannot be carried onto a small board.
 const P = {                           // the sliders and choosers
   size: SCHELLING_SIZE,
-  density: 70, percentRed: 50,
+  density: SCHELLING_DENSITY, percentRed: 50,
   redMin: 31, redMax: 100,
   greenMin: 31, greenMax: 100,
   neighborhood: "radius", radius: 2,
@@ -847,8 +848,8 @@ el("cbX").addEventListener("change", paint);
 el("cbCVD").addEventListener("change", () => { readColors(); paint(); });
 
 const PRESETS = {
-  shipped:        { size:NETLOGO_SIZE,   density:99, percentRed:50, redMin:31, redMax:100, greenMin:31, greenMax:100, neighborhood:"radius", radius:2,  pSwitch:0 },
-  classic:        { size:SCHELLING_SIZE, density:70, percentRed:50, redMin:30, redMax:100, greenMin:30, greenMax:100, neighborhood:"moore",  radius:2,  pSwitch:0 },
+  shipped:        { size:NETLOGO_SIZE,   density:NETLOGO_DENSITY,   percentRed:50, redMin:31, redMax:100, greenMin:31, greenMax:100, neighborhood:"radius", radius:2,  pSwitch:0 },
+  classic:        { size:SCHELLING_SIZE, density:SCHELLING_DENSITY, percentRed:50, redMin:30, redMax:100, greenMin:30, greenMax:100, neighborhood:"moore",  radius:2,  pSwitch:0 },
   ceiling:        { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:60,  greenMin:40, greenMax:60,  neighborhood:"radius", radius:3,  pSwitch:0 },
   integrationist: { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:0,  redMax:45,  greenMin:0,  greenMax:45,  neighborhood:"radius", radius:3,  pSwitch:0 },
   churn:          { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:100, greenMin:40, greenMax:100, neighborhood:"radius", radius:2,  pSwitch:0.05 }

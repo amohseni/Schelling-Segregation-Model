@@ -16,7 +16,7 @@ install-netlogo.sh         installs NetLogo Desktop on macOS
 
 ## The model
 
-Each agent is red or green and sits alone on a patch of a 51 x 51 torus. It counts the agents in its neighborhood and is **happy** when the same-color share falls inside `[minimum-wanted, maximum-wanted]`:
+Each agent is red or green and sits alone on a patch of a square torus whose side is set by `lattice-size`. It counts the agents in its neighborhood and is **happy** when the same-color share falls inside `[minimum-wanted, maximum-wanted]`:
 
 ```
 similar-nearby >= minimum-wanted * total-nearby / 100
@@ -27,7 +27,8 @@ Each tick, every unhappy agent relocates to a uniformly random vacant patch; the
 
 | Parameter | Range | Default | Effect |
 |---|---|---|---|
-| `density` | 50-99 | 99 | occupancy; setup only |
+| `lattice-size` | 8-151 | 16 | side of the square torus; setup only |
+| `density` | 50-99 | 80 | occupancy; setup only |
 | `Percent-red` | 0-100 | 50 | share of agents that start red; setup only |
 | `red/green-minimum-wanted` | 0-100 | 31 | floor on same-color share |
 | `red/green-maximum-wanted` | 0-100 | 100 | ceiling on same-color share |
@@ -35,13 +36,28 @@ Each tick, every unhappy agent relocates to a uniformly random vacant patch; the
 | `Radius` | 0-100 | 2 | radius when `Neighborhood = Radius` |
 | `Probability-switch` | 0-0.1 | 0 | per-tick chance an agent flips color |
 
-## Three properties of this model that are easy to miss
+## Which board is Schelling's
+
+The default is **16 x 16 with about a fifth of the cells vacant**: the board Schelling describes first building and running by hand with coins, in his own retrospective account ("Some Fun, Thirty-Five Years Ago," *Handbook of Computational Economics* vol. 2, 2006). Three different boards get called his, and they denote different objects:
+
+| Object | Board | Reachable here |
+|---|---|---|
+| The apparatus he built and ran by hand, c. 1969 | 16 x 16, ~1/5 blank | yes, the default and the *Classic Schelling* preset |
+| The figures printed in Schelling 1971 (JMS 1:143-186) | 13 x 16 | no; a square lattice cannot represent it |
+| The figures in *Micromotives and Macrobehavior* (1978) | 8 x 8 | yes, the bottom of the slider |
+| NetLogo's world | 51 x 51 | yes, the *As shipped* preset |
+
+The two article attributions come from Hegselmann's history of the model (*JASSS* 15(4):9, 2012; 20(3):15, 2017) rather than from a reading of the originals, which this environment's proxy could not reach. The agent and vacancy counts in Schelling's published figures are **not verified** and are not claimed anywhere in this project. There is no convention in the agent-based-modeling literature about a grid size inherited from Schelling: Mesa uses 20 x 20, NetLogo 51 x 51, and so on.
+
+## Four properties of this model that are easy to miss
 
 **1. Under `Radius`, every agent counts itself.** `turtles in-radius r` includes the asking turtle, so `similar-nearby` is always at least 1. This inflates the `% similar` monitor by `50/n` points, where `n` is the neighborhood size. Measured at t = 0 with radius 2 (n = 13, mean of 8 seeds): the monitor reads **53.82%**, while the same-color share among *other* agents is **49.91%**. Moore neighborhoods exclude the agent itself, so the two neighborhood settings are not on a common scale, and a threshold of 31 means something different under each.
 
 **2. Relocation is global, not local.** `move-to one-of patches with [not any? turtles-here]` teleports an unhappy agent anywhere on the torus. Classic Schelling moves agents to *nearby* vacancies. Here there is no escape gradient, so clustering comes entirely from who stays put, and convergence is much faster than the local-search version.
 
-**3. The maximum-wanted ceiling is the model's real addition.** Wilensky's original has a floor only, so no agent is ever too segregated. With a ceiling below 100, an agent can be unhappy for being *too* surrounded by its own kind, and the system need never settle.
+**3. Lattice size is a modeling choice, not a display choice.** The radius-2 disc is 13 patches at every world size, so it is 0.5% of a 51 x 51 torus and 5% of a 16 x 16 one. Shrinking the lattice enlarges each agent's neighborhood as a share of the world and shrinks the pool of relocation targets, so small worlds are noisier and settle in fewer ticks.
+
+**4. The maximum-wanted ceiling is the model's real addition.** Wilensky's original has a floor only, so no agent is ever too segregated. With a ceiling below 100, an agent can be unhappy for being *too* surrounded by its own kind, and the system need never settle.
 
 ## Known failure modes in the original .nlogo
 
@@ -58,13 +74,15 @@ These are in the NetLogo source as written, not artifacts of the port. The brows
 
 | Check | Result |
 |---|---|
-| Agents and vacancies conserved over 200 ticks | 2576 agents, 25 vacancies, unchanged |
-| Defaults (radius 2, min 31, density 99) | converges t = 25, `% similar` 53.9 -> 70.8 |
-| Classic Schelling (Moore, min 30, density 95) | converges t = 21, `% similar` 74.1 |
-| Tolerance ceiling (min 40, max 60, radius 3) | no convergence in 400 ticks, 222-402 unhappy |
+| Agents + vacancies = cells, at sizes 8/13/16/51/101/151 | exact at every size |
+| Default board, Schelling 16 x 16 (Moore, min 30, density 80) | converges t = 7-12, `% similar` 47.5 -> 66.8-71.5 |
+| `As shipped`, NetLogo 51 x 51 (radius 2, min 31, density 99) | converges t = 18-25, `% similar` 53.9 -> 69.5-70.8 |
+| Tolerance ceiling (min 40, max 60, radius 3) | no convergence in 2000 ticks, 282-398 unhappy |
+| Integrationists (max 45) | no convergence, ~1780 unhappy, `% similar` pinned near 55 |
 | `Radius = 0` (self only) | 1 neighbor, `% similar` 100, all happy |
 | Isolated agents under Moore (`total-nearby = 0`) | happy, matching `0 >= 0 and 0 <= 0` |
-| Same seed, two runs | bit-identical |
+| Density 99 on a 16 x 16 board | no vacancies, halts at t = 0 with the gridlock message |
+| Same seed, two runs, non-default size | bit-identical |
 
 The port uses a seeded PRNG (mulberry32), so a given seed reproduces a run exactly. NetLogo's own PRNG differs, so seeds do not transfer between the two.
 
