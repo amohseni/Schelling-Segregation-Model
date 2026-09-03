@@ -62,6 +62,7 @@
 }
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{
   background:var(--bg);
   color:var(--ink);
@@ -281,7 +282,7 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
           <button data-preset="band" title="Floor 40 and ceiling 60: an agent is unhappy alone and unhappy surrounded. No arrangement satisfies everyone, so percent similar stalls near 50 and the run never ends.">Wants a balanced mix</button>
           <button data-preset="integrationist" title="Ceiling 45 and no floor: every agent wants to be in the local minority. They cannot all be, so about seven agents in ten stay unhappy forever.">Integrationists</button>
           <button data-preset="mismatched" title="Red wants 55% of its neighbors alike, green only 20%. The picky group is never satisfied: roughly 550 agents keep moving and the world stays near 57% similar.">One picky group, one easygoing</button>
-          <button data-preset="unequal" title="Three kinds at 60/20/20, every one of them holding the same floor of 30. The majority settles among 71% its own kind; the two minorities reach only 51% and 46%. No preference differs between them: group size alone decides who gets a neighborhood of their own kind, and about 250 agents never stop moving.">Identical preferences, unequal groups</button>
+          <button data-preset="unequal" title="Three kinds at 60/20/20, every one of them holding the same floor of 30. The majority settles among 71% its own kind; the two minorities reach only 51% and 46%. No preference differs between them: group size alone decides who gets a neighborhood of their own kind, and about 250 agents never stop moving.">Three-type model</button>
           <button data-preset="churn" title="Each agent flips color with probability 0.05 per tick, so the composition never stabilizes even as clusters keep forming.">Random type switching</button>
         </div>
         <label class="check"><input type="checkbox" id="cbX" checked> Mark unhappy agents with &times;</label>
