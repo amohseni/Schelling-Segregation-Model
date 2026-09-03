@@ -18,6 +18,7 @@
   --series-b:#C2610F;
   --agent-a:#D73229;
   --agent-b:#59B03C;
+  --agent-c:#2E5FD0;
   --lattice-bg:#FAFBFC;
   --mark:#0E1319;
   --shadow:0 1px 2px rgba(20,26,33,.06), 0 8px 24px rgba(20,26,33,.06);
@@ -156,6 +157,7 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:3
 .chips{display:flex;flex-wrap:wrap;gap:5px}
 .chips button{font-size:11.5px;padding:5px 9px;border-radius:20px}
 
+.hint{font-size:11.5px;color:var(--ink-3);margin-top:2px}
 .check{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12.5px;color:var(--ink-2);cursor:pointer}
 .check input{accent-color:var(--accent);width:15px;height:15px;margin:0}
 
@@ -231,7 +233,7 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
 <header>
   <div>
     <h1>Schelling Segregation Lab</h1>
-    <p class="sub">Two kinds of agent, each with a floor <em>and</em> a ceiling on how much of its own kind it wants nearby. Unhappy agents relocate at random. Watch how far the pattern outruns the preference.</p>
+    <p class="sub">Schelling&rsquo;s segregation model shows how mild preferences for similar neighbors can generate severe segregation without anyone intending it. Explore the model by varying its parameters and observing how individual preferences shape population-level patterns.</p>
   </div>
   <div class="prov">
     ComplexSegregation.nlogo<br>
@@ -272,11 +274,11 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
       <div class="phead"><span class="plabel">Presets</span></div>
       <div class="pbody">
         <div class="chips">
-          <button data-preset="schelling" title="The 16 x 16 board Schelling describes building and running by hand, about a fifth of it left vacant. Moore neighborhoods; agents want 30% of their neighbors alike.">Schelling&rsquo;s board</button>
+          <button data-preset="schelling" title="The 16 x 16 board Schelling describes building and running by hand, about a fifth of it left vacant. Moore neighborhoods; agents want 30% of their neighbors alike.">Schelling&rsquo;s original model</button>
           <button data-preset="netlogo" title="The values ComplexSegregation.nlogo ships with: a 51 x 51 world at 99% occupancy, radius-2 neighborhoods, a floor of 31 and no ceiling.">NetLogo defaults</button>
-          <button data-preset="tolerant" title="Almost nobody is unhappy to begin with (104 agents of 2480), and the world settles near 56% similar. Below the tipping point: the preference is too weak to sort anyone.">Wants 20% alike: stays mixed</button>
-          <button data-preset="tipping" title="The headline result. Every agent is content to be outnumbered more than two to one, and the world still sorts itself to about 75% similar in fifteen to twenty ticks.">Wants 30% alike: sorts anyway</button>
-          <button data-preset="strong" title="Two agents in five are unhappy at the start. The world separates to about 87% similar, still short of the total separation the preference would allow.">Wants 50% alike: sharp separation</button>
+          <button data-preset="tolerant" title="Almost nobody is unhappy to begin with (104 agents of 2480), and the world settles near 56% similar. Below the tipping point: the preference is too weak to sort anyone.">Wants ≥ 20% alike: stays mixed</button>
+          <button data-preset="tipping" title="The headline result. Every agent is content to be outnumbered more than two to one, and the world still sorts itself to about 75% similar in fifteen to twenty ticks.">Wants ≥ 30% alike: sorts anyway</button>
+          <button data-preset="strong" title="Two agents in five are unhappy at the start. The world separates to about 87% similar, still short of the total separation the preference would allow.">Wants ≥ 50% alike: sharp separation</button>
           <button data-preset="band" title="Floor 40 and ceiling 60: an agent is unhappy alone and unhappy surrounded. No arrangement satisfies everyone, so percent similar stalls near 50 and the run never ends.">Wants a balanced mix</button>
           <button data-preset="integrationist" title="Ceiling 45 and no floor: every agent wants to be in the local minority. They cannot all be, so about seven agents in ten stay unhappy forever.">Integrationists</button>
           <button data-preset="mismatched" title="Red wants 55% of its neighbors alike, green only 20%. The picky group is never satisfied: roughly 550 agents keep moving and the world stays near 57% similar.">One picky group, one easygoing</button>
@@ -302,12 +304,20 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
         <div class="group">
           <div class="gname">Population <span class="tag">setup only</span></div>
           <div class="field">
+            <div class="frow"><span class="fname">kinds of agent</span></div>
+            <div class="seg" role="group" aria-label="Number of agent types">
+              <button id="bTypes2" aria-pressed="true">Two</button>
+              <button id="bTypes3" aria-pressed="false">Three</button>
+            </div>
+          </div>
+          <div class="field">
             <div class="frow"><span class="fname">density</span><span class="fval" id="vDensity">99</span></div>
             <input type="range" id="sDensity" min="50" max="99" step="1" value="99">
           </div>
           <div class="field">
             <div class="frow"><span class="fname">percent-red</span><span class="fval" id="vRed">50</span></div>
             <input type="range" id="sRed" min="0" max="100" step="1" value="50">
+            <div class="hint" id="redHint" hidden>Green and blue split the remainder evenly.</div>
           </div>
         </div>
 
@@ -335,6 +345,18 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
           </div>
         </div>
 
+        <div class="group" id="blueGroup" hidden>
+          <div class="gname">Blue preferences <span class="tag">live</span></div>
+          <div class="field">
+            <div class="frow"><span class="fname">blue-minimum-wanted</span><span class="fval" id="vBmin">31</span></div>
+            <input type="range" id="sBmin" min="0" max="100" step="1" value="31">
+          </div>
+          <div class="field">
+            <div class="frow"><span class="fname">blue-maximum-wanted</span><span class="fval" id="vBmax">100</span></div>
+            <input type="range" id="sBmax" min="0" max="100" step="1" value="100">
+          </div>
+        </div>
+
         <div class="group">
           <div class="gname">Neighborhood <span class="tag">live</span></div>
           <div class="seg" role="group" aria-label="Neighborhood definition">
@@ -343,7 +365,7 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
           </div>
           <div class="field" id="radiusField">
             <div class="frow"><span class="fname">radius</span><span class="fval" id="vRadius">2</span></div>
-            <input type="range" id="sRadius" min="0" max="25" step="1" value="2">
+            <input type="range" id="sRadius" min="0" max="25" step="1" value="1">
           </div>
         </div>
 
@@ -373,6 +395,7 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
         <div class="legend">
           <span class="key"><span class="swatch" id="swA"></span>red agents</span>
           <span class="key"><span class="swatch" id="swB"></span>green agents</span>
+          <span class="key" id="keyC" hidden><span class="swatch" id="swC"></span>blue agents</span>
           <span class="key"><span class="swatch" style="background:var(--lattice-bg);border:1px solid var(--line)"></span>vacant</span>
           <span class="key"><span class="swatch" style="background:transparent;border:1px solid var(--ink-3);position:relative">&nbsp;</span>&times; = wants to move</span>
         </div>
@@ -385,7 +408,7 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
           <p><strong>2. Relocation is global, not local.</strong> An unhappy agent jumps to a uniformly random vacant patch anywhere on the torus, not to a nearby one. That is a real difference from classic Schelling: there is no gradient of escape, so clusters form purely from who stays put.</p>
           <p><strong>3. The default board is Schelling&rsquo;s, and three different boards get called that.</strong> The default here is 16 &times; 16 with about a fifth of the cells vacant, which is the board Schelling describes building and running by hand with coins, in his own retrospective account. The figures printed in his 1971 article use a 13 &times; 16 board, which a square lattice cannot represent; <em>Micromotives and Macrobehavior</em> (1978) uses 8 &times; 8, which the slider reaches. NetLogo&rsquo;s own 51 &times; 51 is the <em>As shipped</em> preset. The two article attributions come from Hegselmann&rsquo;s history of the model rather than from a reading of the originals.</p>
           <p><strong>4. Lattice size changes the model, not just the picture.</strong> The radius-2 disc is 13 patches whatever the world size, so on a 51 &times; 51 torus a neighborhood is 0.5% of the world and on a 16 &times; 16 torus it is 5% of it. Shrinking the lattice makes each agent's neighborhood a larger share of everything, and makes the random relocation target a much smaller pool, so small worlds are noisier and reach their resting state in fewer ticks.</p>
-          <p><strong>5. Under Radius, an agent counts itself.</strong> <code>turtles in-radius r</code> includes the asking agent, so every agent contributes one guaranteed same-color neighbor. With radius 2 that is 1 of about 13, which lifts the reported <em>% similar</em> by <code>50/n</code> points: at t = 0 the monitor reads about 53.8% where the true share among <em>other</em> agents is 49.9%. The minimum threshold is correspondingly easier to clear than it looks. Moore neighborhoods exclude the agent itself, so the two definitions are not on the same scale.</p>
+          <p><strong>5. Under Radius, an agent counts itself.</strong> <code>turtles in-radius r</code> includes the asking agent, so every agent contributes one guaranteed same-color neighbor. The disc has 5 patches at radius 1 and 13 at radius 2, so the guaranteed self-match lifts the reported <em>% similar</em> by <code>50/n</code> points: 10 points at the default radius of 1, and about 4 at radius 2. The minimum threshold is correspondingly easier to clear than it looks. Moore neighborhoods exclude the agent itself, so the two definitions are not on the same scale.</p>
         </div>
       </details>
     </section>
@@ -439,7 +462,7 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
    so the world is represented as flat arrays over cells.
    ============================================================ */
 
-const EMPTY = 0, RED = 1, GREEN = 2;
+const EMPTY = 0, RED = 1, GREEN = 2, BLUE = 3;
 
 // The board Schelling describes first building and running by hand: 16 x 16,
 // populated at random with about a fifth of the spaces left blank. NetLogo
@@ -452,10 +475,12 @@ const NETLOGO_SIZE = 51, NETLOGO_DENSITY = 99;
 // cannot be carried onto a small board.
 const P = {                           // the sliders and choosers
   size: SCHELLING_SIZE,
+  types: 2,                           // 2 or 3 kinds of agent
   density: SCHELLING_DENSITY, percentRed: 50,
   redMin: 31, redMax: 100,
   greenMin: 31, greenMax: 100,
-  neighborhood: "radius", radius: 2,
+  blueMin: 31, blueMax: 100,
+  neighborhood: "radius", radius: 1,
   pSwitch: 0
 };
 
@@ -521,7 +546,9 @@ function setup(){
   empties = []; emptyAt.fill(-1);
   for (let i = 0; i < N; i++){
     if (Math.floor(rnd() * 100) < P.density){
-      occ[i] = Math.floor(rnd() * 100) < P.percentRed ? RED : GREEN;
+      if (Math.floor(rnd() * 100) < P.percentRed) occ[i] = RED;
+      else if (P.types === 2) occ[i] = GREEN;                 // unchanged draw order for 2 types
+      else occ[i] = randInt(2) === 0 ? GREEN : BLUE;          // the rest split evenly
     } else {
       emptyAt[i] = empties.length; empties.push(i);
     }
@@ -567,10 +594,15 @@ function updateTurtles(){
   for (let i = 0; i < N; i++) if (occ[i] !== EMPTY) order.push(i);
   shuffle(order);
   const nOff = offX.length, ps = P.pSwitch;
+  const LO = [0, P.redMin, P.greenMin, P.blueMin];
+  const HI = [0, P.redMax, P.greenMax, P.blueMax];
   for (let k = 0; k < order.length; k++){
     const i = order[k];
     // switch types. Inside the same `ask`, so later agents see earlier switches.
-    if (ps > 0 && rnd() < ps) occ[i] = occ[i] === RED ? GREEN : RED;
+    if (ps > 0 && rnd() < ps){
+      if (P.types === 2) occ[i] = occ[i] === RED ? GREEN : RED;
+      else { const t = 1 + randInt(2); occ[i] = t >= occ[i] ? t + 1 : t; }  // uniform over the other two
+    }
     const c = occ[i], x = i % W, y = (i / W) | 0;
     let sim = 0, oth = 0;
     for (let o = 0; o < nOff; o++){
@@ -582,8 +614,7 @@ function updateTurtles(){
     }
     const tot = sim + oth;
     simN[i] = sim; totN[i] = tot;
-    const lo = c === RED ? P.redMin : P.greenMin;
-    const hi = c === RED ? P.redMax : P.greenMax;
+    const lo = LO[c], hi = HI[c];
     happy[i] = (sim >= lo * tot / 100 && sim <= hi * tot / 100) ? 1 : 0;
   }
 }
@@ -611,15 +642,22 @@ const ctx = cv.getContext("2d", { alpha: false });
 let cell = 8, pad = 0, cssSize = 408;
 
 function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-let colA = "#D73229", colB = "#59B03C", colBg = "#FAFBFC", colMark = "#0E1319";
+let colA = "#D73229", colB = "#59B03C", colC = "#2E5FD0", colBg = "#FAFBFC", colMark = "#0E1319";
+let COL = [];
+// The colorblind-safe set is Okabe-Ito vermillion / bluish green / blue: the one
+// triple that clears every check of the palette validator against both the light
+// and the dark lattice background, worst-case CVD dE 11.0.
 function readColors(){
   const cvd = document.getElementById("cbCVD").checked;
-  colA = cvd ? "#E66100" : css("--agent-a");
-  colB = cvd ? "#1F78B4" : css("--agent-b");
+  colA = cvd ? "#D55E00" : css("--agent-a");
+  colB = cvd ? "#009E73" : css("--agent-b");
+  colC = cvd ? "#0072B2" : css("--agent-c");
   colBg = css("--lattice-bg");
   colMark = css("--mark");
+  COL = [colBg, colA, colB, colC];
   document.getElementById("swA").style.background = colA;
   document.getElementById("swB").style.background = colB;
+  document.getElementById("swC").style.background = colC;
 }
 
 function resizeLattice(){
@@ -643,7 +681,7 @@ function paint(){
   for (let i = 0; i < N; i++){
     const v = occ[i];
     if (v === EMPTY) continue;
-    ctx.fillStyle = v === RED ? colA : colB;
+    ctx.fillStyle = COL[v];
     ctx.fillRect((i % W) * cell, ((i / W) | 0) * cell, cell, cell);
   }
   // square-x marks on the unhappy
@@ -799,6 +837,8 @@ bindSlider("sRmin", "vRmin", "redMin", int, liveRecompute);
 bindSlider("sRmax", "vRmax", "redMax", int, liveRecompute);
 bindSlider("sGmin", "vGmin", "greenMin", int, liveRecompute);
 bindSlider("sGmax", "vGmax", "greenMax", int, liveRecompute);
+bindSlider("sBmin", "vBmin", "blueMin", int, liveRecompute);
+bindSlider("sBmax", "vBmax", "blueMax", int, liveRecompute);
 bindSlider("sRadius", "vRadius", "radius", int, () => { buildOffsets(); liveRecompute(); });
 bindSlider("sSwitch", "vSwitch", "pSwitch", x => x.toFixed(2));
 
@@ -822,6 +862,26 @@ function setNeighborhood(mode){
   el("sRadius").disabled = mode !== "radius";
   buildOffsets(); liveRecompute(); refresh();
 }
+// Switching the number of kinds is a setup-only change, like density: it takes
+// effect on the next Setup. The red share is retargeted so three kinds start
+// roughly equal, which the user can then override.
+function setTypes(n, retargetShare){
+  P.types = n;
+  el("bTypes2").setAttribute("aria-pressed", n === 2);
+  el("bTypes3").setAttribute("aria-pressed", n === 3);
+  el("blueGroup").hidden = n !== 3;
+  el("keyC").hidden = n !== 3;
+  el("redHint").hidden = n !== 3;
+  if (retargetShare){
+    const s = el("sRed");
+    s.value = n === 3 ? 34 : 50;
+    s.dispatchEvent(new Event("input"));
+  }
+  refresh();
+}
+el("bTypes2").addEventListener("click", () => { setTypes(2, true); setup(); refresh(); });
+el("bTypes3").addEventListener("click", () => { setTypes(3, true); setup(); refresh(); });
+
 el("bMoore").addEventListener("click", () => setNeighborhood("moore"));
 el("bRadius").addEventListener("click", () => setNeighborhood("radius"));
 
@@ -854,23 +914,25 @@ el("cbCVD").addEventListener("change", () => { readColors(); paint(); });
 // Every preset below was run to its resting state over three seeds; the chip
 // tooltips quote what was measured, not what the parameters suggest.
 const PRESETS = {
-  schelling:      { size:SCHELLING_SIZE, density:SCHELLING_DENSITY, percentRed:50, redMin:30, redMax:100, greenMin:30, greenMax:100, neighborhood:"moore",  radius:2, pSwitch:0 },
-  netlogo:        { size:NETLOGO_SIZE,   density:NETLOGO_DENSITY,   percentRed:50, redMin:31, redMax:100, greenMin:31, greenMax:100, neighborhood:"radius", radius:2, pSwitch:0 },
-  tolerant:       { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:20, redMax:100, greenMin:20, greenMax:100, neighborhood:"moore",  radius:2, pSwitch:0 },
-  tipping:        { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:30, redMax:100, greenMin:30, greenMax:100, neighborhood:"moore",  radius:2, pSwitch:0 },
-  strong:         { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:50, redMax:100, greenMin:50, greenMax:100, neighborhood:"moore",  radius:2, pSwitch:0 },
-  band:           { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:60,  greenMin:40, greenMax:60,  neighborhood:"radius", radius:3, pSwitch:0 },
-  integrationist: { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:0,  redMax:45,  greenMin:0,  greenMax:45,  neighborhood:"radius", radius:3, pSwitch:0 },
-  mismatched:     { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:55, redMax:100, greenMin:20, greenMax:100, neighborhood:"moore",  radius:2, pSwitch:0 },
-  churn:          { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:100, greenMin:40, greenMax:100, neighborhood:"radius", radius:2, pSwitch:0.05 }
+  schelling:      { size:SCHELLING_SIZE, density:SCHELLING_DENSITY, percentRed:50, redMin:30, redMax:100, greenMin:30, greenMax:100, neighborhood:"moore",  radius:1, pSwitch:0, types:2 },
+  netlogo:        { size:NETLOGO_SIZE,   density:NETLOGO_DENSITY,   percentRed:50, redMin:31, redMax:100, greenMin:31, greenMax:100, neighborhood:"radius", radius:2, pSwitch:0, types:2 },
+  tolerant:       { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:20, redMax:100, greenMin:20, greenMax:100, neighborhood:"moore",  radius:1, pSwitch:0, types:2 },
+  tipping:        { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:30, redMax:100, greenMin:30, greenMax:100, neighborhood:"moore",  radius:1, pSwitch:0, types:2 },
+  strong:         { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:50, redMax:100, greenMin:50, greenMax:100, neighborhood:"moore",  radius:1, pSwitch:0, types:2 },
+  band:           { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:60,  greenMin:40, greenMax:60,  neighborhood:"radius", radius:3, pSwitch:0, types:2 },
+  integrationist: { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:0,  redMax:45,  greenMin:0,  greenMax:45,  neighborhood:"radius", radius:3, pSwitch:0, types:2 },
+  mismatched:     { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:55, redMax:100, greenMin:20, greenMax:100, neighborhood:"moore",  radius:1, pSwitch:0, types:2 },
+  churn:          { size:NETLOGO_SIZE,   density:95, percentRed:50, redMin:40, redMax:100, greenMin:40, greenMax:100, neighborhood:"radius", radius:2, pSwitch:0.05, types:2 }
 };
 document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
   const p = PRESETS[b.dataset.preset];
   const set = (id, val) => { const s = el(id); s.value = val; s.dispatchEvent(new Event("input")); };
+  setTypes(p.types || 2, false);
   set("sSize", p.size);
   set("sDensity", p.density); set("sRed", p.percentRed);
   set("sRmin", p.redMin); set("sRmax", p.redMax);
   set("sGmin", p.greenMin); set("sGmax", p.greenMax);
+  set("sBmin", p.blueMin != null ? p.blueMin : 31); set("sBmax", p.blueMax != null ? p.blueMax : 100);
   set("sRadius", p.radius); set("sSwitch", p.pSwitch);
   setNeighborhood(p.neighborhood);
   setup(); refresh();
@@ -947,6 +1009,7 @@ function refresh(){
 
 /* ---- boot ---- */
 readColors();
+setTypes(2, false);
 setNeighborhood("radius");
 new ResizeObserver(() => { resizeLattice(); drawPlots(); }).observe(cv.parentElement);
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { readColors(); paint(); drawPlots(); });

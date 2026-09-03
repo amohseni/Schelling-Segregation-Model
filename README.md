@@ -16,7 +16,7 @@ install-netlogo.sh         installs NetLogo Desktop on macOS
 
 ## The model
 
-Each agent is red or green and sits alone on a patch of a square torus whose side is set by `lattice-size`. It counts the agents in its neighborhood and is **happy** when the same-color share falls inside `[minimum-wanted, maximum-wanted]`:
+Each agent is red or green (or blue, with three kinds enabled) and sits alone on a patch of a square torus whose side is set by `lattice-size`. It counts the agents in its neighborhood and is **happy** when the same-color share falls inside `[minimum-wanted, maximum-wanted]`:
 
 ```
 similar-nearby >= minimum-wanted * total-nearby / 100
@@ -28,13 +28,20 @@ Each tick, every unhappy agent relocates to a uniformly random vacant patch; the
 | Parameter | Range | Default | Effect |
 |---|---|---|---|
 | `lattice-size` | 8-151 | 16 | side of the square torus; setup only |
+| `kinds of agent` | 2 / 3 | 2 | two types, or three; setup only |
 | `density` | 50-99 | 80 | occupancy; setup only |
-| `Percent-red` | 0-100 | 50 | share of agents that start red; setup only |
-| `red/green-minimum-wanted` | 0-100 | 31 | floor on same-color share |
-| `red/green-maximum-wanted` | 0-100 | 100 | ceiling on same-color share |
+| `Percent-red` | 0-100 | 50 | share of agents that start red; with three kinds the rest split evenly; setup only |
+| `red/green/blue-minimum-wanted` | 0-100 | 31 | floor on same-color share |
+| `red/green/blue-maximum-wanted` | 0-100 | 100 | ceiling on same-color share |
 | `Neighborhood` | Moore / Radius | Radius | `neighbors` (8 patches) or `in-radius` |
-| `Radius` | 0-100 | 2 | radius when `Neighborhood = Radius` |
-| `Probability-switch` | 0-0.1 | 0 | per-tick chance an agent flips color |
+| `Radius` | 0-25 | 1 | radius when `Neighborhood = Radius`; the disc is 5 patches at 1, 13 at 2 |
+| `Probability-switch` | 0-0.1 | 0 | per-tick chance an agent changes type, uniformly among the others |
+
+### A third kind of agent
+
+The `kinds of agent` control adds a blue type with its own floor and ceiling. Nothing in the happiness rule changes: `similar-nearby` still counts agents of the asking agent's own color and `total-nearby` still counts all of them. What changes is the baseline, and it is worth keeping in mind when reading the monitor: three equal groups start at about 33% similar rather than 50%, so the same `% similar` number means something different. The tipping point survives the generalization. On a 51 x 51 Moore world at density 95, three equal groups go from 33.7% similar to 53% at a floor of 20, and to 72% at a floor of 30, converging in 11-15 and 20-23 ticks.
+
+Agent colors are validated, not chosen by eye. The default trio is red `#D73229`, green `#59B03C`, blue `#2E5FD0`. The colorblind-safe trio is Okabe-Ito vermillion `#D55E00`, bluish green `#009E73` and blue `#0072B2`: of every candidate tested it is the only one clearing all-pairs CVD separation, the normal-vision floor, and 3:1 contrast against **both** the light and the dark lattice background, with a worst case of ΔE 11.0 under deuteranopia. Hue identity is preserved across the two palettes, so red stays warm, green stays green, blue stays blue.
 
 ## Which board is Schelling's
 
@@ -51,7 +58,7 @@ The two article attributions come from Hegselmann's history of the model (*JASSS
 
 ## Four properties of this model that are easy to miss
 
-**1. Under `Radius`, every agent counts itself.** `turtles in-radius r` includes the asking turtle, so `similar-nearby` is always at least 1. This inflates the `% similar` monitor by `50/n` points, where `n` is the neighborhood size. Measured at t = 0 with radius 2 (n = 13, mean of 8 seeds): the monitor reads **53.82%**, while the same-color share among *other* agents is **49.91%**. Moore neighborhoods exclude the agent itself, so the two neighborhood settings are not on a common scale, and a threshold of 31 means something different under each.
+**1. Under `Radius`, every agent counts itself.** `turtles in-radius r` includes the asking turtle, so `similar-nearby` is always at least 1. This inflates the `% similar` monitor by `50/n` points, where `n` is the neighborhood size: the disc holds 5 patches at radius 1 and 13 at radius 2, so the bias is 10 points at the default radius and about 4 at radius 2. Measured at t = 0 with radius 2 (mean of 8 seeds): the monitor reads **53.82%**, while the same-color share among *other* agents is **49.91%**. Moore neighborhoods exclude the agent itself, so the two neighborhood settings are not on a common scale, and a threshold of 31 means something different under each.
 
 **2. Relocation is global, not local.** `move-to one-of patches with [not any? turtles-here]` teleports an unhappy agent anywhere on the torus. Classic Schelling moves agents to *nearby* vacancies. Here there is no escape gradient, so clustering comes entirely from who stays put, and convergence is much faster than the local-search version.
 
@@ -76,11 +83,11 @@ Every preset was run to its resting state over three seeds; the chip tooltips qu
 
 | Preset | Setting | What happens |
 |---|---|---|
-| Schelling's board | 16 x 16, density 80, Moore, floor 30 | converges t = 7-12, `% similar` 47.5 -> 67-72 |
+| Schelling's original model | 16 x 16, density 80, Moore, floor 30 | converges t = 7-12, `% similar` 47.5 -> 67-72 |
 | NetLogo defaults | 51 x 51, density 99, radius 2, floor 31 | converges t = 18-25, `% similar` 53.9 -> 69.5-70.8 |
-| Wants 20% alike | floor 20, Moore | 104 of 2480 unhappy at t = 0; converges t = 6-8, 50.3 -> 56. Below the tipping point |
-| Wants 30% alike | floor 30, Moore | 399 unhappy; converges t = 15-21, 50.3 -> 74-76. The headline result |
-| Wants 50% alike | floor 50, Moore | 988 unhappy; converges t = 22-27, 50.3 -> 87 |
+| Wants >= 20% alike | floor 20, Moore | 104 of 2480 unhappy at t = 0; converges t = 6-8, 50.3 -> 56. Below the tipping point |
+| Wants >= 30% alike | floor 30, Moore | 399 unhappy; converges t = 15-21, 50.3 -> 74-76. The headline result |
+| Wants >= 50% alike | floor 50, Moore | 988 unhappy; converges t = 22-27, 50.3 -> 87 |
 | Wants a balanced mix | floor 40, ceiling 60, radius 3 | never settles; `% similar` stalls at 50, 268-331 unhappy |
 | Integrationists | ceiling 45, no floor, radius 3 | never settles; 1735-1817 of 2480 unhappy, `% similar` near 55 |
 | One picky group, one easygoing | red floor 55, green floor 20, Moore | never settles; 544-578 unhappy, `% similar` near 57 |
@@ -93,7 +100,9 @@ Those three rows are the tipping-point lesson in one screen. At a floor of 20 th
 | Check | Result |
 |---|---|
 | Agents + vacancies = cells, at sizes 8/13/16/51/101/151 | exact at every size |
-| Every preset, three seeds | matches the table above |
+| Every preset, three seeds | matches the table above, unchanged after adding the third type |
+| Three kinds: agents conserved, no type outside 1-3 under `Probability-switch` | holds over 200 ticks |
+| Switching kinds and clicking a preset | preset restores two kinds; no blue agents remain |
 | `Radius = 0` (self only) | 1 neighbor, `% similar` 100, all happy |
 | Isolated agents under Moore (`total-nearby = 0`) | happy, matching `0 >= 0 and 0 <= 0` |
 | Density 99 on a 16 x 16 board | no vacancies, halts at t = 0 with the gridlock message |
