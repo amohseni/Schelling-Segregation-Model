@@ -250,8 +250,9 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
     <p class="sub">Schelling&rsquo;s segregation model shows how mild preferences for similar neighbors can generate severe segregation without anyone intending it. Explore the model by varying its parameters and observing how individual preferences shape population-level patterns.</p>
   </div>
   <div class="prov">
-    ComplexSegregation.nlogo<br>
-    <span id="worldReadout">51 &times; 51 torus</span>
+    Adapted from a model by<br>
+    Uri Wilensky (1997) and Kevin Zollman (2018)<br>
+    ComplexSegregation.nlogo &middot; <span id="worldReadout">51 &times; 51 torus</span>
   </div>
 </header>
 
@@ -287,8 +288,8 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
       <div class="phead"><span class="plabel">Presets</span></div>
       <div class="pbody">
         <div class="chips">
+          <button data-preset="netlogo" title="Where the page starts, and the values ComplexSegregation.nlogo ships with: a 51 x 51 world at 99% occupancy, radius-2 neighborhoods, a floor of 31 and no ceiling.">Default settings</button>
           <button data-preset="schelling" title="The 16 x 16 board Schelling describes building and running by hand, about a fifth of it left vacant. Moore neighborhoods; agents want 30% of their neighbors alike.">Schelling&rsquo;s original model</button>
-          <button data-preset="netlogo" title="The values ComplexSegregation.nlogo ships with: a 51 x 51 world at 99% occupancy, radius-2 neighborhoods, a floor of 31 and no ceiling.">NetLogo defaults</button>
           <button data-preset="tolerant" title="Almost nobody is unhappy to begin with (about 100 of 2480), and the world settles near 56% similar. Below the tipping point: the preference is too weak to sort anyone.">Wants ≥ 20% alike</button>
           <button data-preset="tipping" title="The headline result. Every agent is content to be outnumbered more than two to one, and the world still sorts itself to about 75% similar in fifteen to twenty ticks.">Wants ≥ 30% alike</button>
           <button data-preset="strong" title="Two agents in five are unhappy at the start. The world separates to about 87% similar, still short of the total separation the preference would allow.">Wants ≥ 50% alike</button>
@@ -420,13 +421,18 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
     <section class="panel">
       <div class="phead"><span class="plabel">About this model</span></div>
       <div class="notebody" style="padding:14px">
-          <p>Each agent counts its neighbors and is <strong>happy</strong> when the share that matches its own color falls inside <code>[minimum-wanted, maximum-wanted]</code>. Unhappy agents move; happy agents stay. When everyone is happy the run halts.</p>
-          <p><strong>1. The ceiling is the interesting part.</strong> Wilensky's original model has only a floor, so agents are never too segregated. Here <code>maximum-wanted</code> below 100 makes an agent unhappy for being <em>too</em> surrounded by its own kind, which can prevent the run from ever settling.</p>
-          <p><strong>2. Relocation is global, not local.</strong> An unhappy agent jumps to a uniformly random vacant patch anywhere on the torus, not to a nearby one. That is a real difference from classic Schelling: there is no gradient of escape, so clusters form purely from who stays put.</p>
-          <p><strong>3. The default board is Schelling&rsquo;s, and three different boards get called that.</strong> The default here is 16 &times; 16 with about a fifth of the cells vacant, which is the board Schelling describes building and running by hand with coins, in his own retrospective account. The figures printed in his 1971 article use a 13 &times; 16 board, which a square lattice cannot represent; <em>Micromotives and Macrobehavior</em> (1978) uses 8 &times; 8, which the slider reaches. NetLogo&rsquo;s own 51 &times; 51 is the <em>NetLogo defaults</em> preset. The two article attributions come from Hegselmann&rsquo;s history of the model rather than from a reading of the originals.</p>
-          <p><strong>4. Lattice size changes the model, not just the picture.</strong> The radius-2 disc is 13 patches whatever the world size, so on a 51 &times; 51 torus a neighborhood is 0.5% of the world and on a 16 &times; 16 torus it is 5% of it. Shrinking the lattice makes each agent's neighborhood a larger share of everything, and makes the random relocation target a much smaller pool, so small worlds are noisier and reach their resting state in fewer ticks.</p>
-          <p><strong>5. Under Radius, an agent counts itself.</strong> <code>turtles in-radius r</code> includes the asking agent, so every agent contributes one guaranteed same-color neighbor. The disc has 5 patches at radius 1 and 13 at radius 2, so the guaranteed self-match lifts the reported <em>% similar</em> by <code>50/n</code> points: 10 points at the default radius of 1, and about 4 at radius 2. The minimum threshold is correspondingly easier to clear than it looks. Moore neighborhoods exclude the agent itself, so the two definitions are not on the same scale.</p>
-        </div>
+          <p><strong>State.</strong> Each cell of an <em>L</em> &times; <em>L</em> torus holds at most one agent. Every agent has a type and two thresholds, a floor and a ceiling, both percentages. Write <em>s</em> for the number of agents in an agent&rsquo;s neighborhood sharing its type and <em>n</em> for the number of agents in that neighborhood of any type. The agent is <strong>content</strong> when <code>floor/100 &le; s/n &le; ceiling/100</code>, and discontent otherwise. An agent with no neighbors at all is content, since the condition holds vacuously. The neighborhood is either the eight adjacent cells (Moore) or every cell within distance <em>r</em> (Radius), which includes the agent&rsquo;s own cell.</p>
+          <p><strong>Setup.</strong> Each cell is occupied independently with probability <code>density</code>, and each occupant is assigned a type at random in the stated proportions.</p>
+          <p><strong>Each tick.</strong> (1) Every discontent agent, visited in random order, moves to a cell drawn uniformly from the currently vacant cells; the vacancy list updates as the pass proceeds, so an agent moving later cannot take a cell already claimed in the same tick. (2) Every agent then recomputes <em>s</em>, <em>n</em>, and its contentment. (3) The run halts when no agent is discontent.</p>
+
+          <p><strong>1. Whether an equilibrium exists at all depends on the ceiling.</strong> With <code>maximum-wanted</code> at 100 an agent is discontent only for having too few of its own type nearby, and the system can always satisfy everyone by segregating further. With a ceiling below 100 an agent is also discontent for having too many, and no arrangement need satisfy every agent at once. This is the substantive difference between Zollman&rsquo;s version and Wilensky&rsquo;s, and it is what separates the presets that converge from those that run indefinitely.</p>
+          <p><strong>2. Relocation is global, not local.</strong> A discontent agent moves to a uniformly random vacancy anywhere on the torus, not to a nearby one. Schelling&rsquo;s formulation moves agents to nearby vacancies, which produces a gradient of escape and slow frontier migration. Here there is no gradient: clustering arises entirely from which agents stay put, and the resting state is reached in far fewer ticks than local search would take.</p>
+          <p><strong>3. Under Radius, each agent counts itself.</strong> The disc includes the agent&rsquo;s own cell, so <em>s</em> is never below 1 and the reported <em>% similar</em> is raised by roughly <code>50/n</code> points: about 10 at radius 1, where the disc holds 5 cells, and about 4 at radius 2, where it holds 13. The floor is correspondingly easier to clear than its stated value suggests. Moore neighborhoods exclude the agent, so a threshold of 31 does not mean the same thing under the two settings. The chance figure shown beside <em>% similar</em> accounts for this, which is why it is the figure to compare against rather than 50.</p>
+          <p><strong>4. Neighborhood size is a fraction of the world, and that fraction matters.</strong> The radius-2 disc holds 13 cells at every lattice size, so it is 0.5% of a 51 &times; 51 torus and 5% of a 16 &times; 16 one. A smaller world therefore gives each agent a neighborhood covering more of the population and a smaller pool of destinations, which makes small worlds noisier and quicker to settle.</p>
+          <p><strong>5. Type switching is order dependent.</strong> When <code>probability-switch</code> exceeds zero, an agent may change type inside the same pass that counts neighbors, so agents visited later in the pass see the switches made by those visited earlier and not the reverse. This is a property of the original NetLogo source, reproduced here rather than corrected.</p>
+
+          <p><strong>Provenance.</strong> The default settings are the values <code>ComplexSegregation.nlogo</code> ships with. The <em>Schelling&rsquo;s original model</em> preset uses the 16 &times; 16 board Schelling describes building by hand; the figures in his 1971 article use 13 &times; 16, which a square lattice cannot represent, and <em>Micromotives and Macrobehavior</em> (1978) uses 8 &times; 8. Those two attributions come from Hegselmann&rsquo;s history of the model rather than from a reading of the originals.</p>
+      </div>
     </section>
   </div>
 
@@ -494,19 +500,19 @@ const EMPTY = 0, RED = 1, GREEN = 2, BLUE = 3;
 // populated at random with about a fifth of the spaces left blank. NetLogo
 // ships a much larger world. Both are offered as presets.
 const SCHELLING_SIZE = 16, SCHELLING_DENSITY = 80;
-const NETLOGO_SIZE = 51, NETLOGO_DENSITY = 99;
+const NETLOGO_SIZE = 51, NETLOGO_DENSITY = 99;   // the values the .nlogo ships with, and this page's defaults
 
 // Density and board size are coupled: 1% of 256 cells rounds to no vacancies at
 // all, and the model deadlocks before the first tick, so NetLogo's density of 99
 // cannot be carried onto a small board.
 const P = {                           // the sliders and choosers
-  size: SCHELLING_SIZE,
+  size: NETLOGO_SIZE,
   types: 2,                           // 2 or 3 kinds of agent
-  density: SCHELLING_DENSITY, percentRed: 50,
+  density: NETLOGO_DENSITY, percentRed: 50,
   redMin: 31, redMax: 100,
   greenMin: 31, greenMax: 100,
   blueMin: 31, blueMax: 100,
-  neighborhood: "radius", radius: 1,
+  neighborhood: "radius", radius: 2,
   pSwitch: 0
 };
 
