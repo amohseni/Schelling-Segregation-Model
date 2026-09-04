@@ -50,16 +50,16 @@ Agent colors are validated, not chosen by eye. The default trio is red `#D73229`
 
 ## Which board is Schelling's
 
-The default is **16 x 16 with about a fifth of the cells vacant**: the board Schelling describes first building and running by hand with coins, in his own retrospective account ("Some Fun, Thirty-Five Years Ago," *Handbook of Computational Economics* vol. 2, 2006). Three different boards get called his, and they denote different objects:
+The *Schelling's original model* preset is **16 x 16 with about a fifth of the cells vacant**: the board Schelling describes first building and running by hand with coins, in his own retrospective account ("Some Fun, Thirty-Five Years Ago," *Handbook of Computational Economics* vol. 2, 2006). Three different boards get called his, and they denote different objects:
 
 | Object | Board | Reachable here |
 |---|---|---|
-| The apparatus he built and ran by hand, c. 1969 | 16 x 16, ~1/5 blank | yes, the default and the *Classic Schelling* preset |
+| The apparatus he built and ran by hand, c. 1969 | 16 x 16, ~1/5 blank | yes, the *Schelling's original model* preset |
 | The figures printed in Schelling 1971 (JMS 1:143-186) | 13 x 16 | no; a square lattice cannot represent it |
 | The figures in *Micromotives and Macrobehavior* (1978) | 8 x 8 | yes, the bottom of the slider |
-| NetLogo's world | 51 x 51 | yes, the *As shipped* preset |
+| NetLogo's world | 51 x 51 | yes, the *Default settings* preset, where the page starts |
 
-The two article attributions come from Hegselmann's history of the model (*JASSS* 15(4):9, 2012; 20(3):15, 2017) rather than from a reading of the originals, which this environment's proxy could not reach. The agent and vacancy counts in Schelling's published figures are **not verified** and are not claimed anywhere in this project. There is no convention in the agent-based-modeling literature about a grid size inherited from Schelling: Mesa uses 20 x 20, NetLogo 51 x 51, and so on.
+The agent and vacancy counts in Schelling's published figures are **not verified** and are not claimed anywhere in this project. There is no convention in the agent-based-modeling literature about a grid size inherited from Schelling: Mesa uses 20 x 20, NetLogo 51 x 51, and so on.
 
 ## The algorithm
 
@@ -154,6 +154,31 @@ Those three rows are the tipping-point lesson in one screen. At a floor of 20 th
 The port uses a seeded PRNG (mulberry32), so a given seed reproduces a run exactly. NetLogo's own PRNG differs, so seeds do not transfer between the two.
 
 One deliberate departure: dragging a live slider recomputes happiness without advancing the tick counter and without applying `Probability-switch`, so that moving a slider cannot itself flip anyone's color.
+
+## Where this lives
+
+This folder is mirrored as a standalone public repository at
+<https://github.com/amohseni/Schelling-Segregation-Model>, which is the copy to
+share. That repository holds only these files: no other part of `for-claude` is
+in its history.
+
+To move later changes from here to there, copy the current files onto that
+repository's own history. Do not re-run `git subtree split`: it rewrites the
+history each time and the push is rejected as a non-fast-forward.
+
+```bash
+git fetch https://github.com/amohseni/Schelling-Segregation-Model main
+git checkout -B pub FETCH_HEAD
+for f in .gitignore ComplexSegregation.nlogo README.md index.html install-netlogo.sh; do
+  git show <this-branch>:schelling-segregation-model/$f > $f
+done
+git add -A && git commit
+git push https://github.com/amohseni/Schelling-Segregation-Model pub:main
+```
+
+Simpler from the Mac clone: copy the five files into
+`~/Documents/GitHub/Schelling-Segregation-Model`, then commit and push there.
+Drop the "Where this lives" section from that copy; it belongs only here.
 
 ## Credits
 
