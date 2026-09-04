@@ -187,6 +187,19 @@ input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:3
 .key{display:flex;align-items:center;gap:6px}
 .swatch{width:11px;height:11px;border-radius:2px;flex:0 0 auto}
 
+.tsub{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10.5px;color:var(--ink-3);margin-top:2px;font-variant-numeric:tabular-nums;
+}
+.typerow{display:flex;flex-wrap:wrap;gap:4px 14px;padding:10px 14px;border-top:1px solid var(--line-soft);background:var(--panel)}
+.typeitem{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)}
+.typeitem b{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:500;color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+.startwrap{position:relative;width:100%;aspect-ratio:1;background:var(--lattice-bg);border:1px solid var(--line-soft);border-radius:4px;overflow:hidden}
+#latticeStart{display:block;width:100%;height:100%;image-rendering:pixelated}
+
 /* ---- readouts ---- */
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft)}
 .tile{background:var(--panel);padding:12px 14px}
@@ -264,7 +277,7 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
           <div class="frow"><span class="fname">Random seed</span></div>
           <div class="seedrow">
             <input type="number" id="iSeed" value="1" min="0" step="1" aria-label="Random seed">
-            <button id="btnSeed" title="New random seed">&#8635;</button>
+            <button id="btnSeed" title="Run this seed again, for an exactly reproducible run">Replay</button>
           </div>
         </div>
       </div>
@@ -276,15 +289,16 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
         <div class="chips">
           <button data-preset="schelling" title="The 16 x 16 board Schelling describes building and running by hand, about a fifth of it left vacant. Moore neighborhoods; agents want 30% of their neighbors alike.">Schelling&rsquo;s original model</button>
           <button data-preset="netlogo" title="The values ComplexSegregation.nlogo ships with: a 51 x 51 world at 99% occupancy, radius-2 neighborhoods, a floor of 31 and no ceiling.">NetLogo defaults</button>
-          <button data-preset="tolerant" title="Almost nobody is unhappy to begin with (104 agents of 2480), and the world settles near 56% similar. Below the tipping point: the preference is too weak to sort anyone.">Wants ≥ 20% alike: stays mixed</button>
-          <button data-preset="tipping" title="The headline result. Every agent is content to be outnumbered more than two to one, and the world still sorts itself to about 75% similar in fifteen to twenty ticks.">Wants ≥ 30% alike: sorts anyway</button>
-          <button data-preset="strong" title="Two agents in five are unhappy at the start. The world separates to about 87% similar, still short of the total separation the preference would allow.">Wants ≥ 50% alike: sharp separation</button>
+          <button data-preset="tolerant" title="Almost nobody is unhappy to begin with (about 100 of 2480), and the world settles near 56% similar. Below the tipping point: the preference is too weak to sort anyone.">Wants ≥ 20% alike</button>
+          <button data-preset="tipping" title="The headline result. Every agent is content to be outnumbered more than two to one, and the world still sorts itself to about 75% similar in fifteen to twenty ticks.">Wants ≥ 30% alike</button>
+          <button data-preset="strong" title="Two agents in five are unhappy at the start. The world separates to about 87% similar, still short of the total separation the preference would allow.">Wants ≥ 50% alike</button>
           <button data-preset="band" title="Floor 40 and ceiling 60: an agent is unhappy alone and unhappy surrounded. No arrangement satisfies everyone, so percent similar stalls near 50 and the run never ends.">Wants a balanced mix</button>
           <button data-preset="integrationist" title="Ceiling 45 and no floor: every agent wants to be in the local minority. They cannot all be, so about seven agents in ten stay unhappy forever.">Integrationists</button>
           <button data-preset="mismatched" title="Red wants 55% of its neighbors alike, green only 20%. The picky group is never satisfied: roughly 550 agents keep moving and the world stays near 57% similar.">One picky group, one easygoing</button>
           <button data-preset="unequal" title="Three kinds at 60/20/20, every one of them holding the same floor of 30. The majority settles among 71% its own kind; the two minorities reach only 51% and 46%. No preference differs between them: group size alone decides who gets a neighborhood of their own kind, and about 250 agents never stop moving.">Three-type model</button>
           <button data-preset="churn" title="Each agent flips color with probability 0.05 per tick, so the composition never stabilizes even as clusters keep forming.">Random type switching</button>
         </div>
+        <div class="hint" id="presetNote">Pick a preset. What it sets, and what it does, appears here.</div>
         <label class="check"><input type="checkbox" id="cbX" checked> Mark unhappy agents with &times;</label>
         <label class="check"><input type="checkbox" id="cbCVD"> Colorblind-safe colors</label>
       </div>
@@ -401,17 +415,18 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
           <span class="key"><span class="swatch" style="background:transparent;border:1px solid var(--ink-3);position:relative">&nbsp;</span>&times; = wants to move</span>
         </div>
       </div>
-      <details class="notes">
-        <summary>What this model does, and five things worth knowing about it</summary>
-        <div class="notebody">
+    </section>
+
+    <section class="panel">
+      <div class="phead"><span class="plabel">About this model</span></div>
+      <div class="notebody" style="padding:14px">
           <p>Each agent counts its neighbors and is <strong>happy</strong> when the share that matches its own color falls inside <code>[minimum-wanted, maximum-wanted]</code>. Unhappy agents move; happy agents stay. When everyone is happy the run halts.</p>
           <p><strong>1. The ceiling is the interesting part.</strong> Wilensky's original model has only a floor, so agents are never too segregated. Here <code>maximum-wanted</code> below 100 makes an agent unhappy for being <em>too</em> surrounded by its own kind, which can prevent the run from ever settling.</p>
           <p><strong>2. Relocation is global, not local.</strong> An unhappy agent jumps to a uniformly random vacant patch anywhere on the torus, not to a nearby one. That is a real difference from classic Schelling: there is no gradient of escape, so clusters form purely from who stays put.</p>
-          <p><strong>3. The default board is Schelling&rsquo;s, and three different boards get called that.</strong> The default here is 16 &times; 16 with about a fifth of the cells vacant, which is the board Schelling describes building and running by hand with coins, in his own retrospective account. The figures printed in his 1971 article use a 13 &times; 16 board, which a square lattice cannot represent; <em>Micromotives and Macrobehavior</em> (1978) uses 8 &times; 8, which the slider reaches. NetLogo&rsquo;s own 51 &times; 51 is the <em>As shipped</em> preset. The two article attributions come from Hegselmann&rsquo;s history of the model rather than from a reading of the originals.</p>
+          <p><strong>3. The default board is Schelling&rsquo;s, and three different boards get called that.</strong> The default here is 16 &times; 16 with about a fifth of the cells vacant, which is the board Schelling describes building and running by hand with coins, in his own retrospective account. The figures printed in his 1971 article use a 13 &times; 16 board, which a square lattice cannot represent; <em>Micromotives and Macrobehavior</em> (1978) uses 8 &times; 8, which the slider reaches. NetLogo&rsquo;s own 51 &times; 51 is the <em>NetLogo defaults</em> preset. The two article attributions come from Hegselmann&rsquo;s history of the model rather than from a reading of the originals.</p>
           <p><strong>4. Lattice size changes the model, not just the picture.</strong> The radius-2 disc is 13 patches whatever the world size, so on a 51 &times; 51 torus a neighborhood is 0.5% of the world and on a 16 &times; 16 torus it is 5% of it. Shrinking the lattice makes each agent's neighborhood a larger share of everything, and makes the random relocation target a much smaller pool, so small worlds are noisier and reach their resting state in fewer ticks.</p>
           <p><strong>5. Under Radius, an agent counts itself.</strong> <code>turtles in-radius r</code> includes the asking agent, so every agent contributes one guaranteed same-color neighbor. The disc has 5 patches at radius 1 and 13 at radius 2, so the guaranteed self-match lifts the reported <em>% similar</em> by <code>50/n</code> points: 10 points at the default radius of 1, and about 4 at radius 2. The minimum threshold is correspondingly easier to clear than it looks. Moore neighborhoods exclude the agent itself, so the two definitions are not on the same scale.</p>
         </div>
-      </details>
     </section>
   </div>
 
@@ -420,10 +435,19 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
     <section class="panel">
       <div class="phead"><span class="plabel">Monitors</span></div>
       <div class="tiles">
-        <div class="tile"><div class="tname">% similar</div><div class="tval" id="mSimilar">&mdash;</div></div>
+        <div class="tile"><div class="tname">% similar</div><div class="tval" id="mSimilar">&mdash;</div><div class="tsub" id="mBaseline">&nbsp;</div></div>
         <div class="tile"><div class="tname">% unhappy</div><div class="tval" id="mPctUnhappy">&mdash;</div></div>
         <div class="tile"><div class="tname">num unhappy</div><div class="tval" id="mNumUnhappy">&mdash;</div></div>
         <div class="tile"><div class="tname"># agents</div><div class="tval" id="mAgents">&mdash;</div></div>
+      </div>
+      <div class="typerow" id="typeRow"></div>
+    </section>
+
+    <section class="panel">
+      <div class="phead"><span class="plabel">Starting point</span><span class="plabel">t = 0</span></div>
+      <div class="stage" style="padding:12px">
+        <div class="startwrap"><canvas id="latticeStart"></canvas></div>
+        <div class="hint" id="startNote">The same population before anyone moved.</div>
       </div>
     </section>
 
@@ -449,6 +473,7 @@ details.notes summary:focus-visible{outline:2px solid var(--accent);outline-offs
         <div style="font-size:12px;color:var(--ink-3)" id="copyNote">Copies every tick so far: t, % similar, num unhappy, % unhappy.</div>
       </div>
     </section>
+
   </div>
 
 </div>
@@ -504,7 +529,11 @@ allocWorld();
 
 let ticks = 0, running = false, halted = null;
 let pctSimilar = NaN, pctUnhappy = NaN, numUnhappy = 0, numAgents = 0;
+let baselineSim = NaN;                       // % similar that random placement would give
+const typeSim = [0,0,0,0], typeTot = [0,0,0,0], typeCount = [0,0,0,0];
+let occ0 = null, snapSide = 0;               // the lattice as it stood at t = 0
 const histSim = [], histUn = [], histPctUn = [];
+const prevSim = [], prevUn = [];             // the run before this one, drawn as a ghost
 
 /* ---- seeded RNG so a run is reproducible (NetLogo's random-seed) ---- */
 let rngState = 1;
@@ -538,9 +567,16 @@ function buildOffsets(){
 }
 
 /* ---- setup ---- */
-function setup(){
+function setup(newSeed){
   running = false; halted = null; ticks = 0;
+  // keep the run just finished so the plots can show it behind the new one
+  prevSim.length = 0; prevUn.length = 0;
+  for (const v of histSim) prevSim.push(v);
+  for (const v of histUn) prevUn.push(v);
   histSim.length = 0; histUn.length = 0; histPctUn.length = 0;
+  // Setup draws a new seed, so repeated presses explore rather than repeat.
+  // Replay re-runs the seed on show, which is what keeps a run reproducible.
+  if (newSeed !== false) seedInput.value = String(Math.floor(Math.random() * 1e6) + 1);
   seedRng(+seedInput.value | 0);
   if (W !== P.size){ W = H = P.size; allocWorld(); }   // lattice-size is setup-only, like density
   occ.fill(EMPTY); happy.fill(0); simN.fill(0); totN.fill(0);
@@ -556,8 +592,10 @@ function setup(){
   }
   buildOffsets();
   updateVariables();
+  occ0 = occ.slice(); snapSide = W;   // the starting point, for the before/after view
   record();
   resizeLattice();      // recompute cell size: the world may have changed dimensions
+  paintStart();
 }
 
 /* ---- one tick ---- */
@@ -622,14 +660,28 @@ function updateTurtles(){
 
 function updateGlobals(){
   let sumSim = 0, sumTot = 0, n = 0, un = 0;
+  typeSim.fill(0); typeTot.fill(0); typeCount.fill(0);
   for (let i = 0; i < N; i++){
-    if (occ[i] === EMPTY) continue;
+    const c = occ[i];
+    if (c === EMPTY) continue;
     n++; sumSim += simN[i]; sumTot += totN[i];
+    typeSim[c] += simN[i]; typeTot[c] += totN[i]; typeCount[c]++;
     if (!happy[i]) un++;
   }
   numAgents = n; numUnhappy = un;
   pctSimilar = sumTot > 0 ? (sumSim / sumTot) * 100 : NaN;
   pctUnhappy = n > 0 ? (un / n) * 100 : NaN;
+
+  // What `% similar` would be if this same population were scattered at random.
+  // Sum of squared group shares, except that under Radius every agent counts
+  // itself: exactly one guaranteed match in both sums, so that part is exact
+  // and only the remaining neighbors are left to chance.
+  if (sumTot > 0 && n > 0){
+    let s = 0;
+    for (let c = RED; c <= BLUE; c++){ const p = typeCount[c] / n; s += p * p; }
+    const self = P.neighborhood === "radius" ? n : 0;
+    baselineSim = ((self + s * (sumTot - self)) / sumTot) * 100;
+  } else baselineSim = NaN;
 }
 
 function record(){ histSim.push(pctSimilar); histUn.push(numUnhappy); histPctUn.push(pctUnhappy); }
@@ -673,6 +725,27 @@ function resizeLattice(){
   paint();
 }
 
+// The starting point, drawn once per setup and then left alone.
+const cvStart = document.getElementById("latticeStart");
+const ctxStart = cvStart.getContext("2d", { alpha: false });
+function paintStart(){
+  if (!occ0) return;
+  const rect = cvStart.parentElement.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const side = Math.max(60, Math.floor(rect.width));
+  const c = Math.max(1, Math.floor((side * dpr) / snapSide));
+  const px = c * snapSide;
+  cvStart.width = px; cvStart.height = px;
+  cvStart.style.width = side + "px"; cvStart.style.height = side + "px";
+  ctxStart.fillStyle = colBg; ctxStart.fillRect(0, 0, px, px);
+  for (let i = 0; i < occ0.length; i++){
+    const v = occ0[i];
+    if (v === EMPTY) continue;
+    ctxStart.fillStyle = COL[v];
+    ctxStart.fillRect((i % snapSide) * c, ((i / snapSide) | 0) * c, c, c);
+  }
+}
+
 function paint(){
   const px = cell * W;
   ctx.fillStyle = colBg;
@@ -704,7 +777,7 @@ function paint(){
 }
 
 /* ---- time-series plots: one series each, so the title names it, no legend box ---- */
-function drawPlot(canvas, data, color, yMaxFixed, hoverIdx, fmt){
+function drawPlot(canvas, data, color, yMaxFixed, hoverIdx, fmt, ghost, refLine){
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const wCss = canvas.clientWidth, hCss = canvas.clientHeight;
   canvas.width = Math.round(wCss * dpr); canvas.height = Math.round(hCss * dpr);
@@ -718,11 +791,13 @@ function drawPlot(canvas, data, color, yMaxFixed, hoverIdx, fmt){
 
   let yMax = yMaxFixed;
   if (yMax == null){
-    let m = 0; for (const v of data) if (isFinite(v) && v > m) m = v;
+    let m = 0;
+    for (const v of data) if (isFinite(v) && v > m) m = v;
+    if (ghost) for (const v of ghost) if (isFinite(v) && v > m) m = v;   // share a scale with the ghost
     const step = Math.max(1, Math.pow(10, Math.floor(Math.log10(Math.max(m, 1)))) / 2);
     yMax = Math.max(step * 2, Math.ceil((m * 1.12) / step) * step);
   }
-  const xMax = Math.max(20, data.length - 1);
+  const xMax = Math.max(20, data.length - 1, ghost ? ghost.length - 1 : 0);
   const X = i => L + (data.length <= 1 ? 0 : (i / xMax) * pw);
   const Y = v => T + ph - (Math.max(0, Math.min(v, yMax)) / yMax) * ph;
 
@@ -740,6 +815,30 @@ function drawPlot(canvas, data, color, yMaxFixed, hoverIdx, fmt){
   g.fillText("0", L, hCss - 5);
   g.textAlign = "right";
   g.fillText("t " + Math.max(data.length - 1, 0), L + pw, hCss - 5);
+
+  // the run before this one, so two settings can be compared directly
+  if (ghost && ghost.length > 1){
+    g.strokeStyle = ink3; g.lineWidth = 1.5; g.globalAlpha = 0.35;
+    g.beginPath();
+    let st = false;
+    for (let i = 0; i < ghost.length; i++){
+      const v = ghost[i];
+      if (!isFinite(v)) { st = false; continue; }
+      if (!st){ g.moveTo(X(i), Y(v)); st = true; } else g.lineTo(X(i), Y(v));
+    }
+    g.stroke(); g.globalAlpha = 1;
+  }
+
+  // what random placement of this same population would give
+  if (refLine != null && isFinite(refLine)){
+    const ry = Math.round(Y(refLine)) + 0.5;
+    g.strokeStyle = ink3; g.lineWidth = 1; g.setLineDash([4, 3]);
+    g.beginPath(); g.moveTo(L, ry); g.lineTo(L + pw, ry); g.stroke();
+    g.setLineDash([]);
+    g.fillStyle = ink3; g.textAlign = "left"; g.textBaseline = "bottom";
+    g.font = '10px "IBM Plex Mono", ui-monospace, monospace';
+    g.fillText("chance", L + 3, ry - 2);
+  }
 
   if (data.length === 0) return { X, Y, L, pw };
 
@@ -780,8 +879,8 @@ const f0 = v => String(Math.round(v));
 let hoverSim = null, hoverUn = null;
 
 function drawPlots(){
-  drawPlot(document.getElementById("plotSim"), histSim, css("--series-a"), 100, hoverSim, f1);
-  drawPlot(document.getElementById("plotUn"), histUn, css("--series-b"), null, hoverUn, f0);
+  drawPlot(document.getElementById("plotSim"), histSim, css("--series-a"), 100, hoverSim, f1, prevSim, baselineSim);
+  drawPlot(document.getElementById("plotUn"), histUn, css("--series-b"), null, hoverUn, f0, prevUn, null);
 }
 
 function wireHover(canvasId, tipId, data, which, fmt, unit){
@@ -897,7 +996,7 @@ function applySpeed(){
 speedSlider.addEventListener("input", applySpeed);
 applySpeed();
 
-el("btnSetup").addEventListener("click", () => { setup(); refresh(); });
+el("btnSetup").addEventListener("click", () => { setup(); refresh(); });        // new seed each press
 el("btnStep").addEventListener("click", () => { running = false; go(); paint(); refresh(); });
 el("btnGo").addEventListener("click", () => {
   if (halted === "converged" || halted === "gridlock") return;
@@ -905,12 +1004,10 @@ el("btnGo").addEventListener("click", () => {
   if (running){ lastFrame = 0; acc = 0; requestAnimationFrame(frame); }
   refresh();
 });
-el("btnSeed").addEventListener("click", () => {
-  seedInput.value = String(Math.floor(Math.random() * 1e6) + 1);
-  setup(); refresh();
-});
+el("btnSeed").addEventListener("click", () => { setup(false); refresh(); });   // reproduce the seed on show
+seedInput.addEventListener("keydown", e => { if (e.key === "Enter"){ setup(false); refresh(); } });
 el("cbX").addEventListener("change", paint);
-el("cbCVD").addEventListener("change", () => { readColors(); paint(); });
+el("cbCVD").addEventListener("change", () => { readColors(); paint(); paintStart(); });
 
 // Every preset below was run to its resting state over three seeds; the chip
 // tooltips quote what was measured, not what the parameters suggest.
@@ -929,6 +1026,7 @@ const PRESETS = {
 document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
   const p = PRESETS[b.dataset.preset];
   const set = (id, val) => { const s = el(id); s.value = val; s.dispatchEvent(new Event("input")); };
+  el("presetNote").textContent = b.title;   // the measured description, on screen rather than on hover
   setTypes(p.types || 2, false);
   set("sSize", p.size);
   set("sDensity", p.density); set("sRed", p.percentRed);
@@ -975,6 +1073,16 @@ function frame(t){
 /* ---- readouts ---- */
 function refresh(){
   el("mSimilar").textContent = isFinite(pctSimilar) ? pctSimilar.toFixed(1) : "—";
+  el("mBaseline").textContent = isFinite(baselineSim) ? "chance " + baselineSim.toFixed(1) : "\u00A0";
+  const TN = ["", "red", "green", "blue"];
+  let rows = "";
+  for (let c = RED; c <= BLUE; c++){
+    if (!typeCount[c]) continue;
+    const v = typeTot[c] > 0 ? (100 * typeSim[c] / typeTot[c]).toFixed(1) : "—";
+    rows += '<span class="typeitem"><span class="swatch" style="background:' + COL[c] + '"></span>' +
+            TN[c] + ' <b>' + v + '%</b> <span style="color:var(--ink-3)">of ' + typeCount[c] + '</span></span>';
+  }
+  el("typeRow").innerHTML = numAgents ? rows : "";
   el("mPctUnhappy").textContent = isFinite(pctUnhappy) ? pctUnhappy.toFixed(1) : "—";
   el("mNumUnhappy").textContent = numAgents ? String(numUnhappy) : "—";
   el("mAgents").textContent = numAgents ? String(numAgents) : "—";
@@ -1014,7 +1122,8 @@ readColors();
 setTypes(2, false);
 setNeighborhood("radius");
 new ResizeObserver(() => { resizeLattice(); drawPlots(); }).observe(cv.parentElement);
-window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { readColors(); paint(); drawPlots(); });
+new ResizeObserver(() => paintStart()).observe(cvStart.parentElement);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { readColors(); paint(); paintStart(); drawPlots(); });
 wireHover("plotSim", "tipSim", histSim, "sim", f1, "%");
 wireHover("plotUn", "tipUn", histUn, "un", f0, " unhappy");
 setup();

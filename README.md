@@ -36,6 +36,7 @@ Each tick, every unhappy agent relocates to a uniformly random vacant patch; the
 | `Neighborhood` | Moore / Radius | Radius | `neighbors` (8 patches) or `in-radius` |
 | `Radius` | 0-25 | 1 | radius when `Neighborhood = Radius`; the disc is 5 patches at 1, 13 at 2 |
 | `Probability-switch` | 0-0.1 | 0 | per-tick chance an agent changes type, uniformly among the others |
+| `Random seed` | any integer | new each Setup | Setup randomizes it; Replay re-runs the value shown |
 
 ### A third kind of agent
 
@@ -79,6 +80,20 @@ These are in the NetLogo source as written, not artifacts of the port. The brows
 
 `index.html` reimplements the NetLogo procedures directly: sequential `ask` in randomized order, torus-wrapped shortest distance, `in-radius` including self, a fresh vacancy draw per mover, and the setup-time call to `update-variables`. Verified in headless Chromium:
 
+## Reading the interface
+
+**`% similar` has a chance line under it.** The number on its own cannot be judged, because what counts as no segregation at all moves with the setup: two equal groups mix to 50%, three equal groups to 33%, and the 60/20/20 population to 44%. The tile therefore shows the figure that random placement of this same population would give, and the *Percent similar* plot draws it as a dashed reference line. It is computed rather than guessed: the sum of squared group shares, with the guaranteed self-match under `Radius` separated out because that part is certain rather than chance. Across every preset it lands on the measured t = 0 value.
+
+**A per-group row sits under the monitors.** The aggregate averages the groups together, which hides the result the three-type preset exists to show. The row breaks it out, one figure per group in that group's color.
+
+**The starting point stays on screen.** A thumbnail of the lattice at t = 0 sits beside the live one, so the before and after are visible together rather than one of them being a memory.
+
+**Each plot carries a ghost of the previous run.** Click the three thresholds in order and each new curve is drawn over a faint trace of the one before, on a shared vertical scale.
+
+**Preset descriptions appear on click**, in a caption under the buttons, rather than only in hover text that touch devices never show.
+
+**Setup draws a new random seed** each time it is pressed, so repeated presses explore rather than repeat. **Replay** re-runs the seed currently shown, which is what makes a particular run reproducible; pressing Enter in the seed field does the same.
+
 ## Presets
 
 Every preset was run to its resting state over three seeds; the chip tooltips quote what was measured, not what the parameters suggest. The middle three are the same world at three thresholds, and are meant to be clicked in order.
@@ -110,6 +125,9 @@ Those three rows are the tipping-point lesson in one screen. At a floor of 20 th
 | Isolated agents under Moore (`total-nearby = 0`) | happy, matching `0 >= 0 and 0 <= 0` |
 | Density 99 on a 16 x 16 board | no vacancies, halts at t = 0 with the gridlock message |
 | Same seed, two runs, non-default size | bit-identical |
+| Setup pressed four times | four different seeds |
+| Replay after a run | same seed, bit-identical lattice |
+| Chance baseline vs measured `% similar` at t = 0 | agrees on every preset (50.0/50.3, 53.9/53.9, 51.8/51.8, 44.4/45.6, 54.0/54.3) |
 | `Step` advances the tick and repaints the lattice | canvas pixels change, not only the plots |
 | Legend keys hide with the `hidden` attribute | blue key absent with two kinds, present with three, in the standalone file |
 
