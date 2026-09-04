@@ -117,16 +117,6 @@ The port uses a seeded PRNG (mulberry32), so a given seed reproduces a run exact
 
 One deliberate departure: dragging a live slider recomputes happiness without advancing the tick counter and without applying `Probability-switch`, so that moving a slider cannot itself flip anyone's color.
 
-## Making this its own repository
-
-This folder is self-contained. To split it out:
-
-```bash
-git subtree split --prefix=schelling-segregation-model -b schelling-only
-mkdir ../schelling-segregation-model && cd ../schelling-segregation-model
-git init && git pull ../for-claude schelling-only
-```
-
 ## Credits
 
 Model by Uri Wilensky (1997) and Kevin Zollman (2018), CC BY-NC-SA 3.0. See the model's Info tab for the full notice. Schelling, T. (1978). *Micromotives and Macrobehavior*. Norton.
