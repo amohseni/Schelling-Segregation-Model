@@ -10,7 +10,9 @@ install-netlogo.sh         installs NetLogo Desktop on macOS
 
 ## Running it
 
-**Browser.** Open `index.html`. Nothing to install. It has every slider, monitor, and plot the NetLogo interface has, plus a seed field, presets, and CSV export.
+**Live: <https://amohseni.github.io/Schelling-Segregation-Model/>** That URL is stable and always serves the newest version: a push to `main` republishes it within about a minute.
+
+**Browser, locally.** Open `index.html`. Nothing to install. It has every slider, monitor, and plot the NetLogo interface has, plus a seed field, presets, and CSV export.
 
 **NetLogo Desktop.** `./install-netlogo.sh`, then open `ComplexSegregation.nlogo`. Needed only if you want BehaviorSpace, the code tab, or to modify the model itself.
 
